@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% if title %}
+            <title>{{ title }}</title>
+        {% endif %}
+        <link href="{{ url_for('static', filename='app.css') }}" type="text/css" rel="stylesheet" />
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+    <body>
+        <ul>
+            <li><a href="{{ url_for('index')}}">Dashboard</a></li>
+            <li><a href="{{ url_for('Allincomes')}}">Incomes</a></li>
+            <li><a href="{{ url_for('Allexpenses')}}">Expenses</a></li>
+        </ul>
+        <div class="page">
+        {% block base %}{% endblock %}
+        </div>
+        <div id="footer">
+            <p>&copy Copyright 2021</p>
+        </div>
+    </body>
+</html>

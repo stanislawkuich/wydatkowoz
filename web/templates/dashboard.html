@@ -1,0 +1,12 @@
+{% extends "index.html" %}
+{% block base %}
+<div id="plot">
+    <!-- Placeholder for global-time series -->
+    <div id="plotly-timeseries"></div>
+</div>
+<script>
+    //Parse your Json variable here
+    var graphs = {{ context | safe }};
+    Plotly.plot('plotly-timeseries', graphs, {});
+</script>
+{% endblock %}

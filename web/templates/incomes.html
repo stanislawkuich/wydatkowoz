@@ -1,0 +1,33 @@
+{% extends "index.html" %}
+{% block base %}
+<div id="form_box">
+    <p>Add New Income</p>
+    <form class="form_navi" method="POST" action="{{ url_for('NewIncomes')}}">
+        <label>Date</label>
+        <input type="date" name="income_date" required="required">
+        <label>Income</label>
+        <input type="text" name="income" required="required">
+        <label>Description</label>
+        <input type="text" name="description">
+        <input type="submit" value="Submit">
+    </form>
+</div>
+<table>
+    <tr>
+        <th>Id</th>
+        <th>Year</th>
+        <th>Month</th>
+        <th>Salary</th>
+        <th>Description</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+    <td> {{ item[0] }}</td>
+    <td> {{ item[1] }}</td>
+    <td> {{ item[2] }}</td>
+    <td class="money"> {{ item[3] }}</td>
+    <td> {{ item[4] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

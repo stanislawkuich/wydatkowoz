@@ -1,0 +1,54 @@
+{% extends "index.html" %}
+{% block base %}
+<div id="form_box">
+    <p>Add New Expenses</p>
+    <form class="form_navi" method="POST" action="{{ url_for('NewExpenses')}}">
+        <label>Date</label>
+        <input type="date" name="outcome_date" required="required">
+        <label>Expenses</label>
+        <input type="text" name="outcome" required="required">
+        <label>Description</label>
+        <input type="text" name="description">
+        <label>Category</label>
+        <select name="category">
+            <option value=0>rent</option>
+            <option value=1>savings</option>
+            <option value=2>telecommunication</option>
+            <option value=3>liabilities</option>
+            <option value=4>house_maintenance</option>
+            <option value=5>car_maintenance</option>
+            <option value=6>education</option>
+            <option value=7>entertainment</option>
+            <option value=8 selected>other</option>
+        </select>
+        <label>Is payed?</label>
+        <input type="radio" name="ispayed" value="True" checked="checked">
+        yes
+        <input type="radio" name="ispayed" value="False">
+        no
+        <input type="submit" value="Submit">
+    </form>
+</div>
+<table>
+    <tr>
+        <th>Id</th>
+        <th>Year</th>
+        <th>Month</th>
+        <th>Description</th>
+        <th>Category</th>
+        <th>Cost</th>
+        <th>isPayed?</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+    <td> {{ item[0] }}</td>
+    <td> {{ item[1] }}</td>
+    <td> {{ item[2] }}</td>
+    <td> {{ item[3] }}</td>
+    <td> {{ item[4] }}</td>
+    <td class="money"> {{ item[5] }}</td>
+    <td> {{ item[6] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
