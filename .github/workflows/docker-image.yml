@@ -1,9 +1,6 @@
 name: Wydatkowoz CI pipeline
 
-on:
-  push:
-    tags:
-      - "v*.*.*"
+on: push
 
 jobs:
   build:
