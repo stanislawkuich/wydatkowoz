@@ -1,5 +1,6 @@
 from unittest.loader import makeSuite
 from resources import utils
+from resources import systemVariables
 import unittest
 import pandas as pd
 import plotly
@@ -12,7 +13,7 @@ class BudgetDatabase(unittest.TestCase):
 
     # przed kazdym testem
     def setUp(self):
-        self.g = utils.BudgetDatabase('tests/budgetTest.db')
+        self.g = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     
     # po kazdym tescie:
     def tearDown(self):
@@ -47,7 +48,7 @@ class Vizualizer(unittest.TestCase):
 
     # przed kazdym testem
     def setUp(self):
-        self.g = utils.Vizualizer('tests/budgetTest.db')
+        self.g = utils.Vizualizer(systemVariables.budgetDatabasesPath)
 
     # po kazdym tescie
     def tearDown(self):
