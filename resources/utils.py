@@ -13,6 +13,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
 class EmailProcessor:
     def __init__(self):
         return
@@ -82,8 +85,40 @@ class Email:
 class BudgetDatabase:
     def __init__(self,path=None):
         self.path = path
+        self.CreateDatabase(self.path)
         return
     
+    def CreateDatabase(self,path=None):
+        self.path = path
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS [Incomes] ( 
+	            [IncomeId] INTEGER NOT NULL PRIMARY KEY, 
+	            [YEAR] INTEGER(4) NOT NULL,
+                [MONTH] INTEGER(2) NOT NULL,
+                [SALARY] REAL(50) NOT NULL,
+                [NAME] TEXT NOT NULL
+            );
+            """
+        )
+        self.cur = self.conn.cursor()
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS [Expenses] (
+                [ExpenseId] INTEGER NOT NULL PRIMARY KEY, 
+                [YEAR] INTEGER(4) NOT NULL,
+                [MONTH] INTEGER(2) NOT NULL,
+                [NAME] TEXT NOT NULL,
+                [CATEGORY] INTEGER(2) NOT NULL,
+                [COST] REAL(50) NOT NULL,
+                [WAS_PAYED] INTEGER NOT NULL
+            );
+            """
+        )
+        return
+
     def GetAllIncomes(self,desc_order=True):
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()

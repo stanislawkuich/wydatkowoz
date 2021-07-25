@@ -1,6 +1,6 @@
 FROM python:latest
 WORKDIR /app
-RUN useradd -d /app bot && chown -R bot /app
+RUN useradd -u 1999 -d /app bot && chown -R bot /app
 ENV FLASK_APP=resources/restApi.py
 ENV FLASK_RUN_HOST=0.0.0.0
 COPY  [ ".", "./" ]

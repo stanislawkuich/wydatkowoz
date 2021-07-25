@@ -42,6 +42,10 @@ Example:
 
 > podman run -d -p 8080:5000 -v /home/user:/app/data:Z localhost/wydatkowoz:latest
 
+Remember to assign good permissions
+
+> podman unshare chown 1999:1999 -R /home/user
+
 3. Create systemd service
 
 > podman generate systemd CONTAINER_NAME > /usr/lib/systemd/user/wydatkowoz.service

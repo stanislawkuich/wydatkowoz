@@ -1,8 +1,11 @@
 import flask
+import logging
 from resources import utils, systemVariables
 
 app = flask.Flask(__name__, template_folder='../web/templates', static_folder='../web/templates/static')
-app.config["DEBUG"] = True
+app.config["DEBUG"] = False
+app.logger = logging.getLogger('werkzeug')
+app.logger.setLevel(logging.WARNING)
 
 
 @app.route('/')
