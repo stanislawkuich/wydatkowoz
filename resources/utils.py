@@ -1,7 +1,6 @@
 import mailbox
 from html.parser import HTMLParser
 from html.entities import name2codepoint
-
 from pandas.core.reshape import tile
 from resources import systemVariables
 import sqlite3
@@ -17,11 +16,14 @@ logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='
 logger = logging.getLogger(__name__)
 
 class EmailProcessor:
-    def __init__(self):
+    """
+    Class representing processing emails from local inbox file
+    """
+    def __init__(self,path):
+        self.path = path
         return
 
-    def OpenMailbox(self,path):
-        self.path = path
+    def OpenMailbox(self):
         self.mbox = mailbox.mbox(self.path)
         self.mbox.lock()
         return self.mbox
@@ -64,7 +66,16 @@ class EmailHtmlParser(HTMLParser):
 
 
 class Email:
+    """
+    Class representing email structure
+    """
     def __init__(self,subject=None,date=None,sender=None,receiver=None,contentType=None,messageid=None,body=None):
+        """
+        Create Email object
+
+        :param subject=None,date=None,sender=None,receiver=None,contentType=None,messageid=None,body=None
+        :return email object 
+        """
         self.subject = subject
         self.date = date
         self.body = body
@@ -75,14 +86,25 @@ class Email:
         return
     
     def ParseHtmlBody(self):
+        """
+        Parse HTML body of email
+        """
         #TODO
         return
 
+    def GetEmailBody(self):
+        """
+        Print Email body
+        """
+        return '%s' % (self.body)
 
     def __str__(self):
         return 'Email %s -- Date: %s -- Subject: %s -- From: %s -- To: %s -- Content-Type: %s' % (self.messageid, self.date, self.subject, self.sender, self.receiver, self.contentType)
 
 class BudgetDatabase:
+    """
+    Class representing operations in budget database
+    """
     def __init__(self,path=None):
         self.path = path
         self.CreateDatabase(self.path)
@@ -179,7 +201,7 @@ class BudgetDatabase:
 
 class Vizualizer(BudgetDatabase):
     """
-    Vizualizer - class to create fancy plots from DB
+    Class representing visualizations from Budget DB
     """
     def PrintAllBudget(self):
         income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month','salary','name'])

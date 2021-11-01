@@ -1,7 +1,11 @@
+from email import message
 from unittest.loader import makeSuite
 from resources import utils
 from resources import systemVariables
+from html.parser import HTMLParser
+from html.entities import name2codepoint
 import unittest
+import mailbox
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -64,3 +68,75 @@ class Vizualizer(unittest.TestCase):
         # then
         #print(result)
         self.assertNotEqual(msg, result)
+
+#@unittest.skip
+class EmailProcessor(unittest.TestCase):
+    # obiekt ktory testujemy
+    g = None
+
+    # przed kazdym testem
+    def setUp(self):
+        self.g = utils.EmailProcessor(systemVariables.emailsFilePath)
+
+    # po kazdym tescie
+    def tearDown(self):
+        self.g = None
+    
+    def test_should_OpenMailbox(self):
+        # given
+        msg = 0
+
+        # when
+        result = self.g.OpenMailbox()
+
+        # then
+        for n in result.iterkeys():
+            message = utils.Email(
+                subject= result.get_message(n)['subject'],
+                date= result.get_message(n)['date'],
+                body= result.get_message(n).get_payload(),
+                sender= result.get_message(n)['from'],
+                receiver= result.get_message(n)['to'],
+                contentType= result.get_message(n).get_content_type() 
+            )
+            self.assertIsInstance(message,utils.Email)
+        self.g.CloseMailbox()
+        self.assertIsInstance(result,mailbox.mbox)
+
+#@unittest.skip
+class Email(unittest.TestCase):
+    # obiekt ktory testujemy
+    g = None
+
+    # przed kazdym testem
+    def setUp(self):
+        self.g = utils.Email(
+            subject='Test: płatność kartą xxx na kwotę -1000,00 PLN',
+            date='Wed, 29 Jan 2020 06:47:24 +0100',
+            sender='Sender <sender@test.com>',
+            receiver='<receiver@gmail.com>',
+            contentType='text/html; charset=UTF-8',
+            body='<html>\
+                    <head>\
+                        <title>\
+                            Test\
+                        </title>\
+                    </head>\
+                        <body>\
+                            <h1>Parse me!</h1>\
+                        </body>\
+                </html>')
+
+    # po kazdym tescie
+    def tearDown(self):
+        self.g = None
+
+    def test_shouldInitializeEmailObject(self):
+        # given
+        msg = 0
+
+        # when
+        print(self.g)
+
+        # then
+        self.assertIsInstance(self.g,utils.Email)
