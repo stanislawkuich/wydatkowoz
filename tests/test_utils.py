@@ -140,3 +140,13 @@ class Email(unittest.TestCase):
 
         # then
         self.assertIsInstance(self.g,utils.Email)
+
+    def test_GetExpenseFromSubject(self):
+        # given
+        msg = '-1000,00'
+
+        # when
+        result = self.g.GetExpenseFromSubject()
+
+        # then
+        self.assertEqual(result,msg)

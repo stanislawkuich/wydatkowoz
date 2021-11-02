@@ -6,6 +6,7 @@ from resources import systemVariables
 import sqlite3
 import json
 import logging
+import re
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -97,6 +98,14 @@ class Email:
         Print Email body
         """
         return '%s' % (self.body)
+
+    def GetExpenseFromSubject(self):
+        """
+        Get Expense values from Email subject
+        """
+        expense = re.search(r'([+|-]\d*\,\d{2})',str(self.subject))
+        if expense:
+            return expense.group(1)
 
     def __str__(self):
         return 'Email %s -- Date: %s -- Subject: %s -- From: %s -- To: %s -- Content-Type: %s' % (self.messageid, self.date, self.subject, self.sender, self.receiver, self.contentType)
