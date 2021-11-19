@@ -1,7 +1,7 @@
 import mailbox
-from html.parser import HTMLParser
-from html.entities import name2codepoint
-from pandas.core.reshape import tile
+import email
+from smtpd import SMTPServer
+from os import close, write
 from resources import systemVariables
 import sqlite3
 import json
@@ -9,14 +9,31 @@ import logging
 import re
 import pandas as pd
 import plotly
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-class EmailProcessor:
+class EmailRemoteProcessor(SMTPServer):
+    """
+    Class representing processing emails from remote SMTP cliens
+    """
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+        self.email = email.message_from_bytes(data)
+        self.message = Email(
+            subject=self.email.get('subject'),
+            date=self.email.get('date'),
+            body=self.email.get_payload(),
+            sender=self.email.get('from'),
+            receiver=self.email.get('to'),
+            contentType=self.email.get_content_type()
+        )
+        print(self.message)
+        print(self.message.GetExpenseFromSubject())
+        return
+
+class EmailLocalProcessor:
     """
     Class representing processing emails from local inbox file
     """
@@ -35,36 +52,6 @@ class EmailProcessor:
     
     def __str__(self):
         return 'EmailProcessor %s -- %s' % (self.path, self.mbox)
-
-class EmailHtmlParser(HTMLParser):
-    def handle_starttag(self, tag, attrs):
-        print("Start tag:", tag)
-        for attr in attrs:
-            print("     attr:", attr)
-
-    def handle_endtag(self, tag):
-        print("End tag  :", tag)
-
-    def handle_data(self, data):
-        print("Data     :", data)
-
-    def handle_comment(self, data):
-        print("Comment  :", data)
-
-    def handle_entityref(self, name):
-        c = chr(name2codepoint[name])
-        print("Named ent:", c)
-
-    def handle_charref(self, name):
-        if name.startswith('x'):
-            c = chr(int(name[1:], 16))
-        else:
-            c = chr(int(name))
-        print("Num ent  :", c)
-
-    def handle_decl(self, data):
-        print("Decl     :", data)
-
 
 class Email:
     """

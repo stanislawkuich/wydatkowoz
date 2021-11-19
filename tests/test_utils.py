@@ -9,6 +9,7 @@ import mailbox
 import pandas as pd
 import plotly
 import plotly.express as px
+import asyncore
 
 #@unittest.skip
 class BudgetDatabase(unittest.TestCase):
@@ -70,13 +71,13 @@ class Vizualizer(unittest.TestCase):
         self.assertNotEqual(msg, result)
 
 #@unittest.skip
-class EmailProcessor(unittest.TestCase):
+class EmailLocalProcessor(unittest.TestCase):
     # obiekt ktory testujemy
     g = None
 
     # przed kazdym testem
     def setUp(self):
-        self.g = utils.EmailProcessor(systemVariables.emailsFilePath)
+        self.g = utils.EmailLocalProcessor(systemVariables.emailsFilePath)
 
     # po kazdym tescie
     def tearDown(self):
@@ -92,11 +93,11 @@ class EmailProcessor(unittest.TestCase):
         # then
         for n in result.iterkeys():
             message = utils.Email(
-                subject= result.get_message(n)['subject'],
-                date= result.get_message(n)['date'],
+                subject= result.get_message(n).get('subject'),
+                date= result.get_message(n).get('date'),
                 body= result.get_message(n).get_payload(),
-                sender= result.get_message(n)['from'],
-                receiver= result.get_message(n)['to'],
+                sender= result.get_message(n).get('from'),
+                receiver= result.get_message(n).get('to'),
                 contentType= result.get_message(n).get_content_type() 
             )
             self.assertIsInstance(message,utils.Email)
@@ -150,3 +151,28 @@ class Email(unittest.TestCase):
 
         # then
         self.assertEqual(result,msg)
+
+#@unittest.skip
+class EmailRemoteProcessor(unittest.TestCase):
+    # obiekt ktory testujemy
+    g = None
+
+    # przed kazdym testem
+    def setUp(self):
+        self.g = utils.EmailRemoteProcessor(('localhost',8025),None)
+
+    # po kazdym tescie
+    def tearDown(self):
+        self.g = None
+
+    def test_ReceiveEmail(self):
+        # given
+        msg = 0
+
+        # when
+        try:
+            asyncore.loop()
+        except KeyboardInterrupt:
+            pass
+
+        # then
