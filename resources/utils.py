@@ -30,7 +30,6 @@ class EmailRemoteProcessor(SMTPServer):
             contentType=self.email.get_content_type()
         )
         print(self.message)
-        print(self.message.GetExpenseFromSubject())
         return
 
 class EmailLocalProcessor:

@@ -152,7 +152,7 @@ class Email(unittest.TestCase):
         # then
         self.assertEqual(result,msg)
 
-#@unittest.skip
+@unittest.skip
 class EmailRemoteProcessor(unittest.TestCase):
     # obiekt ktory testujemy
     g = None
