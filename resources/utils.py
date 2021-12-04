@@ -1,10 +1,13 @@
 import mailbox
 import email
+from email.header import decode_header, make_header
 from smtpd import SMTPServer
 from os import close, write
+import smtpd
 from resources import systemVariables
 import sqlite3
 import json
+import datetime
 import logging
 import re
 import pandas as pd
@@ -22,15 +25,16 @@ class EmailRemoteProcessor(SMTPServer):
     def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
         self.email = email.message_from_bytes(data)
         self.message = Email(
-            subject=self.email.get('subject'),
+            subject=make_header(decode_header(self.email.get('subject'))),
             date=self.email.get('date'),
             body=self.email.get_payload(),
             sender=self.email.get('from'),
             receiver=self.email.get('to'),
             contentType=self.email.get_content_type()
         )
-        print(self.message)
-        return
+        newExpense = BudgetDatabase(systemVariables.budgetDatabasesPath)
+        newExpense.SetNewExpenses(year=self.message.GetProperDateFormat()[0],month=self.message.GetProperDateFormat()[1],cost=self.message.GetExpenseFromSubject())
+        return self.accept()
 
 class EmailLocalProcessor:
     """
@@ -89,9 +93,18 @@ class Email:
         """
         Get Expense values from Email subject
         """
-        expense = re.search(r'([+|-]\d*\,\d{2})',str(self.subject))
+        expense = re.search(r'(-)(\d*\,\d{2})',str(self.subject))
         if expense:
-            return expense.group(1)
+            return float(expense.group(2).replace(',','.'))
+    
+    def GetProperDateFormat(self):
+        """
+        Get Proper Date Format from email
+        """
+        original_date = datetime.datetime.strptime(self.date,'%a, %d %b %Y %H:%M:%S +0100')
+        year = original_date.strftime('%Y')
+        month = original_date.strftime('%m')
+        return int(year),int(month)
 
     def __str__(self):
         return 'Email %s -- Date: %s -- Subject: %s -- From: %s -- To: %s -- Content-Type: %s' % (self.messageid, self.date, self.subject, self.sender, self.receiver, self.contentType)
@@ -107,6 +120,7 @@ class BudgetDatabase:
     
     def CreateDatabase(self,path=None):
         self.path = path
+        open(self.path,'a+')
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         self.cur.execute(

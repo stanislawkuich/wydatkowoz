@@ -1,14 +1,11 @@
-from email import message
+from datetime import date, datetime
+from unittest import result
 from unittest.loader import makeSuite
+from unittest.mock import patch
 from resources import utils
 from resources import systemVariables
-from html.parser import HTMLParser
-from html.entities import name2codepoint
 import unittest
 import mailbox
-import pandas as pd
-import plotly
-import plotly.express as px
 import asyncore
 
 #@unittest.skip
@@ -32,7 +29,7 @@ class BudgetDatabase(unittest.TestCase):
         result = self.g.GetAllIncomes()
 
         # then
-        #print(result)
+        print(result)
         self.assertNotEqual(msg, result)
 
     def test_should_GetAllExpenses(self):
@@ -43,7 +40,7 @@ class BudgetDatabase(unittest.TestCase):
         result = self.g.GetAllExpenses()
 
         # then
-        #print(result)
+        print(result)
         self.assertNotEqual(msg, result)
 
 #@unittest.skip
@@ -144,13 +141,23 @@ class Email(unittest.TestCase):
 
     def test_GetExpenseFromSubject(self):
         # given
-        msg = '-1000,00'
+        msg = 1000.00
 
         # when
         result = self.g.GetExpenseFromSubject()
 
         # then
         self.assertEqual(result,msg)
+
+    def test_GetProperDateFormat(self):
+        # given
+        msg = 2020
+
+        # when
+        result = self.g.GetProperDateFormat()
+
+        # then
+        self.assertEqual(result[0],msg)
 
 @unittest.skip
 class EmailRemoteProcessor(unittest.TestCase):
@@ -163,7 +170,7 @@ class EmailRemoteProcessor(unittest.TestCase):
 
     # po kazdym tescie
     def tearDown(self):
-        self.g = None
+        self.g.close()
 
     def test_ReceiveEmail(self):
         # given
