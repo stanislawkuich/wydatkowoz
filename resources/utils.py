@@ -33,7 +33,7 @@ class EmailRemoteProcessor(SMTPServer):
             contentType=self.email.get_content_type()
         )
         newExpense = BudgetDatabase(systemVariables.budgetDatabasesPath)
-        newExpense.SetNewExpenses(year=self.message.GetProperDateFormat()[0],month=self.message.GetProperDateFormat()[1],cost=self.message.GetExpenseFromSubject())
+        newExpense.SetNewExpenses(year=self.message.GetProperDateFormat()[0],month=self.message.GetProperDateFormat()[1],day=self.message.GetProperDateFormat()[2],cost=self.message.GetExpenseFromSubject())
         return self.accept()
 
 class EmailLocalProcessor:
@@ -104,7 +104,8 @@ class Email:
         original_date = datetime.datetime.strptime(self.date,'%a, %d %b %Y %H:%M:%S +0100')
         year = original_date.strftime('%Y')
         month = original_date.strftime('%m')
-        return int(year),int(month)
+        day = original_date.strftime('%d')
+        return int(year),int(month),int(day)
 
     def __str__(self):
         return 'Email %s -- Date: %s -- Subject: %s -- From: %s -- To: %s -- Content-Type: %s' % (self.messageid, self.date, self.subject, self.sender, self.receiver, self.contentType)
@@ -129,6 +130,7 @@ class BudgetDatabase:
 	            [IncomeId] INTEGER NOT NULL PRIMARY KEY, 
 	            [YEAR] INTEGER(4) NOT NULL,
                 [MONTH] INTEGER(2) NOT NULL,
+                [DAY] INTEGER(2) NOT NULL,
                 [SALARY] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL
             );
@@ -141,6 +143,7 @@ class BudgetDatabase:
                 [ExpenseId] INTEGER NOT NULL PRIMARY KEY, 
                 [YEAR] INTEGER(4) NOT NULL,
                 [MONTH] INTEGER(2) NOT NULL,
+                [DAY] INTEGER(2) NOT NULL,
                 [NAME] TEXT NOT NULL,
                 [CATEGORY] INTEGER(2) NOT NULL,
                 [COST] REAL(50) NOT NULL,
@@ -168,27 +171,29 @@ class BudgetDatabase:
             self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY rowid ASC;').fetchall()
         return self.allExpenses
 
-    def SetNewIncomes(self,year=0,month=0, salary=0, name='income'):
+    def SetNewIncomes(self, year=0, month=0, day=0, salary=0, name='income'):
         self.year = year
         self.month = month
+        self.day = day
         self.name = name
         self.salary = salary
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Incomes (YEAR,MONTH,SALARY,NAME) VALUES (%s, %s, %s, '%s');" % (self.year, self.month, self.salary, self.name))
+        self.income = self.cur.execute("INSERT INTO Incomes (YEAR,MONTH,DAY,SALARY,NAME) VALUES (%s, %s, %s, %s, '%s');" % (self.year, self.month, self.day, self.salary, self.name))
         self.conn.commit()
         return 'New IncomeId: '+str(self.cur.lastrowid)
 
-    def SetNewExpenses(self, year=0, month=0, name='expenses', category=8, cost=0, was_payed=False):
+    def SetNewExpenses(self, year=0, month=0, day=0, name='expenses', category=8, cost=0, was_payed=False):
         self.year = year
         self.month = month
+        self.day = day
         self.name = name
         self.category = systemVariables.ExpensesCategories[category]
         self.cost = cost
         self.was_payed = was_payed
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Expenses (YEAR,MONTH,NAME,CATEGORY,COST,WAS_PAYED) VALUES (%s, %s, '%s', '%s', %s, %s);" % (self.year, self.month, self.name, self.category, self.cost, self.was_payed))
+        self.income = self.cur.execute("INSERT INTO Expenses (YEAR,MONTH,DAY,NAME,CATEGORY,COST,WAS_PAYED) VALUES (%s, %s, %s, '%s', '%s', %s, %s);" % (self.year, self.month, self.day, self.name, self.category, self.cost, self.was_payed))
         self.conn.commit()
         return 'New ExpenseId: '+str(self.cur.lastrowid)
     
@@ -213,10 +218,10 @@ class Vizualizer(BudgetDatabase):
     Class representing visualizations from Budget DB
     """
     def PrintAllBudget(self):
-        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month','salary','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','year','month','name','category','cost','was_payed'])
-        date_income = income['year'].astype(str) + '-' + income['month'].astype(str)
-        date_expenses = expenses['year'].astype(str) + '-' + expenses['month'].astype(str)
+        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month', 'day','salary','name'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','year','month', 'day','name','category','cost','was_payed'])
+        date_income = income['year'].astype(str) + '-' + income['month'].astype(str) + '-' + income['day'].astype(str)
+        date_expenses = expenses['year'].astype(str) + '-' + expenses['month'].astype(str) + '-' + income['day'].astype(str)
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(x=date_income, y=income['salary'], name="incomes"),secondary_y=False)
         fig.add_trace(go.Scatter(x=date_expenses, y=expenses['cost'], name="expenses"),secondary_y=True)
