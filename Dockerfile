@@ -8,4 +8,5 @@ RUN pip3 install -r requirements.txt
 RUN chown -R bot:bot .
 USER bot
 EXPOSE 5000
-CMD ["flask", "run"]
+EXPOSE 8025
+CMD ["sh","-c","python wrapper_emailServer.py & flask run  "]
