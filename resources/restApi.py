@@ -34,19 +34,18 @@ def NewIncomes():
     month = time[1]
     day = time[2]
     income = flask.request.form['income']
-    salary = income
     description = flask.request.form['description']
     if description:
-        data = {'year':year,'month':month,'day':day,'salary':salary, 'name':description}
+        data = {'year':year,'month':month,'day':day,'value':income, 'name':description}
     else:
-        data = {'year':year,'month':month,'day':day,'salary':salary}
-    if 'year' not in data or 'month' not in data or 'day' not in data or 'salary' not in data:
+        data = {'year':year,'month':month,'day':day,'value':income}
+    if 'year' not in data or 'month' not in data or 'day' not in data or 'value' not in data:
         return 'Missing mandatory arguments...', 400
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     if 'name' not in data:
-        response = db.SetNewIncomes(data['year'],data['month'],data['day'],data['salary'])
+        response = db.SetNewIncomes(data['year'],data['month'],data['day'],data['value'])
     else:
-        response = db.SetNewIncomes(data['year'],data['month'],data['day'],data['salary'],data['name'])
+        response = db.SetNewIncomes(data['year'],data['month'],data['day'],data['value'],data['name'])
     #return flask.jsonify(response)
     return flask.render_template('status.html', value=response)
 
@@ -62,16 +61,16 @@ def NewExpenses():
     category = flask.request.form['category']
     ispayed = flask.request.form['ispayed']
     if description:
-        data = {'year':year,'month':month, 'day':day, 'cost':outcome, 'name':description, 'category':int(category),'was_payed':ispayed}
+        data = {'year':year,'month':month, 'day':day, 'value':outcome, 'name':description, 'category':int(category),'was_payed':ispayed}
     else:
-        data = {'year':year,'month':month,'day':day, 'cost':outcome, 'category':int(category),'was_payed':ispayed}
-    if 'year' not in data or 'month' not in data or 'day' not in data or 'cost' not in data or 'was_payed' not in data:
+        data = {'year':year,'month':month,'day':day, 'value':outcome, 'category':int(category),'was_payed':ispayed}
+    if 'year' not in data or 'month' not in data or 'day' not in data or 'value' not in data or 'was_payed' not in data:
         return 'Missing mandatory arguments...', 400
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     if 'name' not in data or 'category' not in data:
-        response = db.SetNewExpenses(year=data['year'],month=data['month'],day=data['day'],cost=data['cost'],was_payed=data['was_payed'])
+        response = db.SetNewExpenses(year=data['year'],month=data['month'],day=data['day'],value=data['value'],was_payed=data['was_payed'])
     else:
-        response = db.SetNewExpenses(data['year'],data['month'],data['day'],data['name'],data['category'],data['cost'],data['was_payed'])
+        response = db.SetNewExpenses(data['year'],data['month'],data['day'],data['value'],data['name'],data['category'],data['was_payed'])
     #return flask.jsonify(response)
     return flask.render_template('status.html', value=response)
 

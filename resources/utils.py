@@ -2,8 +2,6 @@ import mailbox
 import email
 from email.header import decode_header, make_header
 from smtpd import SMTPServer
-from os import close, write
-import smtpd
 from resources import systemVariables
 import sqlite3
 import json
@@ -12,8 +10,7 @@ import logging
 import re
 import pandas as pd
 import plotly
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import plotly.express as px
 
 logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -131,7 +128,7 @@ class BudgetDatabase:
 	            [YEAR] INTEGER(4) NOT NULL,
                 [MONTH] INTEGER(2) NOT NULL,
                 [DAY] INTEGER(2) NOT NULL,
-                [SALARY] REAL(50) NOT NULL,
+                [VALUE] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL
             );
             """
@@ -144,9 +141,9 @@ class BudgetDatabase:
                 [YEAR] INTEGER(4) NOT NULL,
                 [MONTH] INTEGER(2) NOT NULL,
                 [DAY] INTEGER(2) NOT NULL,
+                [VALUE] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL,
                 [CATEGORY] INTEGER(2) NOT NULL,
-                [COST] REAL(50) NOT NULL,
                 [WAS_PAYED] INTEGER NOT NULL
             );
             """
@@ -157,45 +154,45 @@ class BudgetDatabase:
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         if desc_order:
-            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY rowid DESC;').fetchall()
+            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY YEAR DESC, MONTH DESC, DAY DESC;').fetchall()
         else:
-            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY rowid ASC;').fetchall()
+            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY YEAR ASC, MONTH ASC, DAY ASC;').fetchall()
         return self.allIncomes
 
     def GetAllExpenses(self,desc_order=True):
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         if desc_order:
-            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY rowid DESC;').fetchall()
+            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY YEAR DESC, MONTH DESC, DAY DESC;').fetchall()
         else:
-            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY rowid ASC;').fetchall()
+            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY YEAR ASC, MONTH ASC, DAY ASC;').fetchall()
         return self.allExpenses
 
-    def SetNewIncomes(self, year=0, month=0, day=0, salary=0, name='income'):
+    def SetNewIncomes(self, year=0, month=0, day=0, value=0, name='income'):
         self.year = year
         self.month = month
         self.day = day
         self.name = name
-        self.salary = salary
+        self.value = value
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Incomes (YEAR,MONTH,DAY,SALARY,NAME) VALUES (%s, %s, %s, %s, '%s');" % (self.year, self.month, self.day, self.salary, self.name))
+        self.income = self.cur.execute("INSERT INTO Incomes (YEAR,MONTH,DAY,VALUE,NAME) VALUES (%s, %s, %s, %s, '%s');" % (self.year, self.month, self.day, self.value, self.name))
         self.conn.commit()
-        return 'New IncomeId: '+str(self.cur.lastrowid)
+        return 'New Income: '+str(self.value)+' PLN'
 
-    def SetNewExpenses(self, year=0, month=0, day=0, name='expenses', category=8, cost=0, was_payed=False):
+    def SetNewExpenses(self, year=0, month=0, day=0, name='expenses', category=8, value=0, was_payed=False):
         self.year = year
         self.month = month
         self.day = day
         self.name = name
         self.category = systemVariables.ExpensesCategories[category]
-        self.cost = cost
+        self.value = value
         self.was_payed = was_payed
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Expenses (YEAR,MONTH,DAY,NAME,CATEGORY,COST,WAS_PAYED) VALUES (%s, %s, %s, '%s', '%s', %s, %s);" % (self.year, self.month, self.day, self.name, self.category, self.cost, self.was_payed))
+        self.income = self.cur.execute("INSERT INTO Expenses (YEAR,MONTH,DAY,VALUE,NAME,CATEGORY,WAS_PAYED) VALUES (%s, %s, %s, %s, '%s', '%s', %s);" % (self.year, self.month, self.day, self.value, self.name, self.category, self.was_payed))
         self.conn.commit()
-        return 'New ExpenseId: '+str(self.cur.lastrowid)
+        return 'New Expense: '+str(self.value)+' PLN'
     
     def DelIncomes(self, id):
         self.id = id
@@ -218,15 +215,15 @@ class Vizualizer(BudgetDatabase):
     Class representing visualizations from Budget DB
     """
     def PrintAllBudget(self):
-        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month', 'day','salary','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','year','month', 'day','name','category','cost','was_payed'])
-        date_income = income['year'].astype(str) + '-' + income['month'].astype(str) + '-' + income['day'].astype(str)
-        date_expenses = expenses['year'].astype(str) + '-' + expenses['month'].astype(str) + '-' + income['day'].astype(str)
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        fig.add_trace(go.Scatter(x=date_income, y=income['salary'], name="incomes"),secondary_y=False)
-        fig.add_trace(go.Scatter(x=date_expenses, y=expenses['cost'], name="expenses"),secondary_y=True)
-        fig.update_xaxes(rangeslider_visible=True)
-        fig.update_layout(width=1500, height=500,title_text="Budget summary")
+        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month', 'day','value','name'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','year','month', 'day','value','name','category','was_payed'])
+        income['type'] = 'income'
+        expenses['type'] = 'expenses'
+        income['dates'] = pd.to_datetime(income['year'].astype(str) + '-' + income['month'].astype(str) + '-' + income['day'].astype(str),format='%Y-%m-%d')
+        expenses['dates'] = pd.to_datetime(expenses['year'].astype(str) + '-' + expenses['month'].astype(str) + '-' + expenses['day'].astype(str),format='%Y-%m-%d')
+        logger.warning(income)
+        data = income.append(expenses)
+        fig = px.bar(data,x='name',y='value',title='Budget summary',barmode='stack')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 
