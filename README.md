@@ -1,18 +1,32 @@
 # Wydatkowoz
 
+<p align="center">
+  <img width="460" height="300" src="https://raw.githubusercontent.com/stanislawkuich/wydatkowoz/development/web/templates/static/logo.png">
+</p>
+
+
 ## Description
 
 Simply application to manage home budget.
 
-![Dashboard](png/dashboard.png "Wydatkowoz - dashboard")
+**Dashboard page**
+
+![Dashboard](png/dashboard_1.png "Wydatkowoz - dashboard")
+![Dashboard](png/dashboard_2.png "Wydatkowoz - dashboard")
+
+**Incomes page**
+
 ![Income](png/income_tab.png "Wydatkowoz - tab to manage incomes")
+
+**Expenses page**
+
 ![Expenses](png/expenses_tab.png "Wydatkowoz - tab to manage expenses")
 
 ## How to run
 
 > docker build -f Dockerfile -t wydatkowoz:latest .
 
-> docker run --rm wydatkowoz:latest
+> docker run --rm -d  -p 5000:5000/tcp -p 8025:8025/tcp wydatkowoz:latest
 
 ### Podman
 

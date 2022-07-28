@@ -1,6 +1,9 @@
 # data repository
 budgetDatabasesPath = 'data/budget.db'
 
+# file contains emails payload
+emailsFilePath = 'data/emails'
+
 # log file
 logFilePath = 'data/wydatkowoz.log'
 

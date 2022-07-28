@@ -1,12 +1,26 @@
 {% extends "index.html" %}
 {% block base %}
-<div id="plot">
-    <!-- Placeholder for global-time series -->
-    <div id="plotly-timeseries"></div>
+<div id="form_box">
+    <p>Budget Usage</p>
+    <div id="numeric-status">{{ context2[2] }}</div>%
 </div>
+<div id="form_box">
+    <p>Last 30 days budget</p>
+    <div id="numeric-status"><a href="{{ url_for('LastNdaysIncomes', days=30)}}">Income: {{ context2[0] }} PLN</a></div>
+    <div id="numeric-status"><a href="{{ url_for('LastNDaysExpenses', days=30)}}">Outcome: {{ context2[1]}} PLN</a></div>
+</div>
+<div id="sideplots">
+    <div id="plotly-last30daysExpenses"></div>
+    <div id="plotly-previousBudgets"></div>
+</div>
+<div id="plotly-timeseries"></div>
 <script>
     //Parse your Json variable here
-    var graphs = {{ context | safe }};
-    Plotly.plot('plotly-timeseries', graphs, {});
+    var graphs1 = {{ context1 | safe }};
+    var graphs3 = {{ context3 | safe }};
+    var graphs4 = {{ context4 | safe }};
+    Plotly.plot('plotly-timeseries', graphs1, {});
+    Plotly.plot('plotly-last30daysExpenses', graphs3, {});
+    Plotly.plot('plotly-previousBudgets', graphs4, {});
 </script>
 {% endblock %}

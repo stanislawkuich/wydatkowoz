@@ -31,22 +31,18 @@
 </div>
 <table>
     <tr>
-        <th>Id</th>
-        <th>Year</th>
-        <th>Month</th>
+        <th>Date</th>
+        <th>Cost</th>
         <th>Description</th>
         <th>Category</th>
-        <th>Cost</th>
         <th>isPayed?</th>
     </tr>
     {% for item in items %}
     <tr>
-    <td> {{ item[0] }}</td>
-    <td> {{ item[1] }}</td>
     <td> {{ item[2] }}</td>
-    <td> {{ item[3] }}</td>
+    <td class="money"> {{ item[3] }}</td>
     <td> {{ item[4] }}</td>
-    <td class="money"> {{ item[5] }}</td>
+    <td> {{ item[5] }}</td>
     <td> {{ item[6] }}</td>
     </tr>
     {% endfor %}

@@ -1,0 +1,80 @@
+From 
+Date: Wed, 29 Jan 2020 06:47:24 +0100
+To: <receiver@gmail.com>
+From: Sender <sender@test.com>
+Subject: Test: płatność kartą xxx na kwotę -1000,00 PLN
+Content-Type: text/html; charset=UTF-8
+  
+
+<html>
+    <head>
+        <title>
+            Test
+        </title>
+    </head>
+    <body>
+        <h1>
+            Parse me!
+        </h1>
+    </body>
+</html>
+From 
+Date: Wed, 29 Jan 2020 06:47:24 +0100
+To: <receiver@gmail.com>
+From: Sender <sender@test.com>
+Subject: Test: płatność kartą xxx na kwotę -1000,00 PLN
+Content-Type: text/html; charset=UTF-8
+  
+
+<html>
+    <head>
+        <title>
+            Test
+        </title>
+    </head>
+    <body>
+        <h1>
+            Parse me!
+        </h1>
+    </body>
+</html>
+From 
+Date: Wed, 29 Jan 2020 06:47:24 +0100
+To: <receiver@gmail.com>
+From: Sender <sender@test.com>
+Subject: Test: Wpływ na konto
+Content-Type: text/html; charset=UTF-8
+  
+
+<html>
+    <head>
+        <title>
+            Test
+        </title>
+    </head>
+    <body>
+        <h1>
+            Parse me!
+        </h1>
+    </body>
+</html>
+From 
+Date: Wed, 29 Jan 2020 06:47:24 +0100
+To: <receiver@gmail.com>
+From: Sender <sender@test.com>
+Subject: Test: rachunek xxxx - obciążenie rachunku
+Content-Type: text/html; charset=UTF-8
+  
+
+<html>
+    <head>
+        <title>
+            Test
+        </title>
+    </head>
+    <body>
+        <h1>
+            Parse me!
+        </h1>
+    </body>
+</html>

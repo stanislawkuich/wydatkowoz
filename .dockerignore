@@ -1,2 +1,7 @@
 .git
+.github
 .vscode
+data/budget.db
+data/emails
+tests
+run_tests.sh
