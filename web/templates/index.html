@@ -5,9 +5,13 @@
             <title>{{ title }}</title>
         {% endif %}
         <link href="{{ url_for('static', filename='app.css') }}" type="text/css" rel="stylesheet" />
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head>
     <body>
+        <div style="text-align: center;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="wydatkowoz logo">
+        </div>
         <ul>
             <li><a href="{{ url_for('index')}}">Dashboard</a></li>
             <li><a href="{{ url_for('Allincomes')}}">Incomes</a></li>

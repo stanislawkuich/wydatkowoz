@@ -89,6 +89,16 @@ th {
     text-align: center;
 }
 #plotly-timeseries {
-    margin: 0px 3px;
+    margin: 20px 3px;
     text-align: center;
+}
+#sideplots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
+}
+#numeric-status {
+    display: inline;
+    border: 1px solid black;
+    margin: 0px 3px;
 }

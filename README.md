@@ -1,10 +1,13 @@
 # Wydatkowoz
 
+![logo](web/templates/static/logo.png)
+
 ## Description
 
 Simply application to manage home budget.
 
-![Dashboard](png/dashboard.png "Wydatkowoz - dashboard")
+![Dashboard](png/dashboard_1.png "Wydatkowoz - dashboard")
+![Dashboard](png/dashboard_2.png "Wydatkowoz - dashboard")
 ![Income](png/income_tab.png "Wydatkowoz - tab to manage incomes")
 ![Expenses](png/expenses_tab.png "Wydatkowoz - tab to manage expenses")
 
@@ -12,7 +15,7 @@ Simply application to manage home budget.
 
 > docker build -f Dockerfile -t wydatkowoz:latest .
 
-> docker run --rm wydatkowoz:latest
+> docker run --rm -d  -p 5000:5000/tcp -p 8025:8025/tcp wydatkowoz:latest
 
 ### Podman
 

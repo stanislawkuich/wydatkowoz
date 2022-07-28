@@ -42,6 +42,29 @@ class BudgetDatabase(unittest.TestCase):
         # then
         print(result)
         self.assertNotEqual(msg, result)
+    
+    def test_should_convertDateToEpochTime(self):
+        # given
+        msg = '1643670000.0'
+
+        # when
+        result = self.g.EpochConverter('2022-02-01')
+
+        # then
+        #print(result)
+        self.assertNotEqual(msg, result)
+    
+    def test_should_convertEpochTimeToDate(self):
+        # given
+        msg = '2022-02-01 00:00:00'
+
+        # when
+        result = self.g.EpochConverter(1643670000,False)
+
+        # then
+        #print(result)
+        self.assertNotEqual(msg, result)
+
 
 #@unittest.skip
 class Vizualizer(unittest.TestCase):
@@ -151,13 +174,13 @@ class Email(unittest.TestCase):
 
     def test_GetProperDateFormat(self):
         # given
-        msg = 2020
+        msg = '2020-01-29'
 
         # when
         result = self.g.GetProperDateFormat()
 
         # then
-        self.assertEqual(result[0],msg)
+        self.assertEqual(result,msg)
 
 @unittest.skip
 class EmailRemoteProcessor(unittest.TestCase):

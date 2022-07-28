@@ -1,6 +1,7 @@
 import mailbox
 import email
 from email.header import decode_header, make_header
+from multiprocessing import current_process
 from smtpd import SMTPServer
 from resources import systemVariables
 import sqlite3
@@ -11,8 +12,9 @@ import re
 import pandas as pd
 import plotly
 import plotly.express as px
+import plotly.graph_objects as go
 
-logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.WARNING)
+logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EmailRemoteProcessor(SMTPServer):
@@ -30,7 +32,8 @@ class EmailRemoteProcessor(SMTPServer):
             contentType=self.email.get_content_type()
         )
         newExpense = BudgetDatabase(systemVariables.budgetDatabasesPath)
-        newExpense.SetNewExpenses(year=self.message.GetProperDateFormat()[0],month=self.message.GetProperDateFormat()[1],day=self.message.GetProperDateFormat()[2],cost=self.message.GetExpenseFromSubject())
+        newExpenseTimestamp = newExpense.EpochConverter(self.message.GetProperDateFormat())
+        newExpense.SetNewExpenses(timestamp=newExpenseTimestamp,date=self.message.GetProperDateFormat(),cost=self.message.GetExpenseFromSubject())
         return self.accept()
 
 class EmailLocalProcessor:
@@ -102,7 +105,7 @@ class Email:
         year = original_date.strftime('%Y')
         month = original_date.strftime('%m')
         day = original_date.strftime('%d')
-        return int(year),int(month),int(day)
+        return str(year+'-'+month+'-'+day)
 
     def __str__(self):
         return 'Email %s -- Date: %s -- Subject: %s -- From: %s -- To: %s -- Content-Type: %s' % (self.messageid, self.date, self.subject, self.sender, self.receiver, self.contentType)
@@ -125,9 +128,8 @@ class BudgetDatabase:
             """
             CREATE TABLE IF NOT EXISTS [Incomes] ( 
 	            [IncomeId] INTEGER NOT NULL PRIMARY KEY, 
-	            [YEAR] INTEGER(4) NOT NULL,
-                [MONTH] INTEGER(2) NOT NULL,
-                [DAY] INTEGER(2) NOT NULL,
+	            [TIMESTAMP] INTEGER(10) NOT NULL,
+                [DATE] TEXT NOT NULL,
                 [VALUE] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL
             );
@@ -138,9 +140,8 @@ class BudgetDatabase:
             """
             CREATE TABLE IF NOT EXISTS [Expenses] (
                 [ExpenseId] INTEGER NOT NULL PRIMARY KEY, 
-                [YEAR] INTEGER(4) NOT NULL,
-                [MONTH] INTEGER(2) NOT NULL,
-                [DAY] INTEGER(2) NOT NULL,
+                [TIMESTAMP] INTEGER(10) NOT NULL,
+                [DATE] TEXT NOT NULL,
                 [VALUE] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL,
                 [CATEGORY] INTEGER(2) NOT NULL,
@@ -154,44 +155,79 @@ class BudgetDatabase:
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         if desc_order:
-            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY YEAR DESC, MONTH DESC, DAY DESC;').fetchall()
+            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY TIMESTAMP DESC;').fetchall()
         else:
-            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY YEAR ASC, MONTH ASC, DAY ASC;').fetchall()
+            self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY TIMESTAMP ASC;').fetchall()
         return self.allIncomes
+
+    def GetIncomesByDate(self,delta):
+        self.delta = delta
+        self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
+        self.delta_timestamp = datetime.timedelta(days=self.delta)
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedIncomes = self.cur.execute('SELECT * FROM Incomes WHERE TIMESTAMP > '+str(self.lastNdays)+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedIncomes
+
+    def GetIncomeByDateRange(self,start_date,end_date):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedIncomes = self.cur.execute('SELECT * FROM Incomes WHERE TIMESTAMP > '+str(self.EpochConverter(self.start_date))+' AND TIMESTAMP < '+str(self.EpochConverter(self.end_date))+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedIncomes
+
 
     def GetAllExpenses(self,desc_order=True):
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         if desc_order:
-            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY YEAR DESC, MONTH DESC, DAY DESC;').fetchall()
+            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY TIMESTAMP DESC;').fetchall()
         else:
-            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY YEAR ASC, MONTH ASC, DAY ASC;').fetchall()
+            self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY TIMESTAMP ASC;').fetchall()
         return self.allExpenses
 
-    def SetNewIncomes(self, year=0, month=0, day=0, value=0, name='income'):
-        self.year = year
-        self.month = month
-        self.day = day
+    def GetExpensesByDate(self,delta):
+        self.delta = delta
+        self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
+        self.delta_timestamp = datetime.timedelta(days=self.delta)
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedExpenses = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.lastNdays)+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedExpenses
+
+    def GetExpensesByDateRange(self,start_date,end_date):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedIncomes = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.EpochConverter(self.start_date))+' AND TIMESTAMP < '+str(self.EpochConverter(self.end_date))+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedIncomes
+
+    def SetNewIncomes(self, timestamp=0, date=0, value=0, name='income'):
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
         self.name = name
         self.value = value
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Incomes (YEAR,MONTH,DAY,VALUE,NAME) VALUES (%s, %s, %s, %s, '%s');" % (self.year, self.month, self.day, self.value, self.name))
+        self.income = self.cur.execute("INSERT INTO Incomes (TIMESTAMP,DATE,VALUE,NAME) VALUES (%s, '%s', %s, '%s');" % (self.timestamp, self.date, self.value, self.name))
         self.conn.commit()
+        logger.info('New income has been added - value: '+self.value+' name: '+self.name)
         return 'New Income: '+str(self.value)+' PLN'
 
-    def SetNewExpenses(self, year=0, month=0, day=0, name='expenses', category=8, value=0, was_payed=False):
-        self.year = year
-        self.month = month
-        self.day = day
+    def SetNewExpenses(self, timestamp=0, date=0, name='expenses', category=8, value=0, was_payed=False):
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
         self.name = name
         self.category = systemVariables.ExpensesCategories[category]
         self.value = value
         self.was_payed = was_payed
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("INSERT INTO Expenses (YEAR,MONTH,DAY,VALUE,NAME,CATEGORY,WAS_PAYED) VALUES (%s, %s, %s, %s, '%s', '%s', %s);" % (self.year, self.month, self.day, self.value, self.name, self.category, self.was_payed))
+        self.expense = self.cur.execute("INSERT INTO Expenses (TIMESTAMP,DATE,VALUE,NAME,CATEGORY,WAS_PAYED) VALUES (%s, '%s', %s, '%s', '%s', %s);" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed))
         self.conn.commit()
+        logger.info('New expense has been added - value: '+self.value+' name: '+self.name)
         return 'New Expense: '+str(self.value)+' PLN'
     
     def DelIncomes(self, id):
@@ -200,6 +236,7 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.income = self.cur.execute('DELETE FROM Incomes WHERE IncomeId=%s;' % (self.id))
         self.conn.commit()
+        logger.info('Income has been deleted - id: '+self.id)
         return 'Total Changes: '+str(self.cur.rowcount)
 
     def DelExpenses(self, id):
@@ -208,24 +245,60 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.income = self.cur.execute('DELETE FROM Expenses WHERE ExpenseId=%s;' % (self.id))
         self.conn.commit()
+        logger.info('Expense has been deleted - id: '+self.id)
         return 'Total Changes: '+str(self.cur.rowcount)
+    
+    def EpochConverter(self,date,convert=True):
+        self.date = date
+        if convert:
+            self.outputTime = datetime.datetime.strptime(self.date, '%Y-%m-%d').timestamp()
+        else:
+            self.outputTime = datetime.datetime.fromtimestamp(self.date)
+        return self.outputTime
 
 class Vizualizer(BudgetDatabase):
     """
     Class representing visualizations from Budget DB
     """
     def PrintAllBudget(self):
-        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','year','month', 'day','value','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','year','month', 'day','value','name','category','was_payed'])
+        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
         income['type'] = 'income'
         expenses['type'] = 'expenses'
-        income['dates'] = pd.to_datetime(income['year'].astype(str) + '-' + income['month'].astype(str) + '-' + income['day'].astype(str),format='%Y-%m-%d')
-        expenses['dates'] = pd.to_datetime(expenses['year'].astype(str) + '-' + expenses['month'].astype(str) + '-' + expenses['day'].astype(str),format='%Y-%m-%d')
-        logger.warning(income)
         data = income.append(expenses)
-        fig = px.bar(data,x='name',y='value',title='Budget summary',barmode='stack')
+        fig = px.bar(data,x='date',y='value',color="type", title='Budget summary',barmode='stack')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
+    
+    def PrintLast30DaysBudget(self):
+        income = pd.DataFrame(self.GetIncomesByDate(30),columns=['index','timestamp','date','value','name'])
+        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
+        try:
+            usage = (expenses['value'].sum() / income['value'].sum()) * 100
+        except ZeroDivisionError:
+            usage = 0
+        return income['value'].sum(),expenses['value'].sum(),usage
+
+    def PrintLast30DaysExpenses(self):
+        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
+        fig = px.pie(expenses,values='value',names='category',title='Last 30 days expenses by category')
+        plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return plot_json
+
+    def PrintPreviousYearsBudget(self):
+        income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        income['type'] = 'income'
+        expenses['type'] = 'expenses'
+        income['total'] = income['value'].sum()
+        expenses['total'] = expenses['value'].sum()
+        data = income.append(expenses)
+        if not data.empty:
+            date_extracted = data['date'].str.split('-',expand=True)
+            data['year'] = date_extracted[0]
+            fig = px.bar(data,x='year',y='total',color="type", title='Budget trends',barmode="group")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
 
 class Validator:
     """
