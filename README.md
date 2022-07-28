@@ -1,14 +1,25 @@
 # Wydatkowoz
 
-![logo](web/templates/static/logo.png)
+<p align="center">
+  <img width="460" height="300" src="https://raw.githubusercontent.com/stanislawkuich/wydatkowoz/development/web/templates/static/logo.png">
+</p>
+
 
 ## Description
 
 Simply application to manage home budget.
 
+**Dashboard page**
+
 ![Dashboard](png/dashboard_1.png "Wydatkowoz - dashboard")
 ![Dashboard](png/dashboard_2.png "Wydatkowoz - dashboard")
+
+**Incomes page**
+
 ![Income](png/income_tab.png "Wydatkowoz - tab to manage incomes")
+
+**Expenses page**
+
 ![Expenses](png/expenses_tab.png "Wydatkowoz - tab to manage expenses")
 
 ## How to run
