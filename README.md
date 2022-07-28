@@ -1,7 +1,7 @@
 # Wydatkowoz
 
 <p align="center">
-  <img width="460" height="300" src="https://raw.githubusercontent.com/stanislawkuich/wydatkowoz/development/web/templates/static/logo.png">
+  <img width="460" height="300" src="https://raw.githubusercontent.com/stanislawkuich/wydatkowoz/main/web/templates/static/logo.png">
 </p>
 
 
