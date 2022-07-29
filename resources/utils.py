@@ -14,7 +14,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 
-logging.basicConfig(filename=systemVariables.logFilePath, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.INFO)
+logging.basicConfig(filename=systemVariables.logFilePath, filemode='a', format='%(asctime)s - %(levelname)s - %(message)s',level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EmailRemoteProcessor(SMTPServer):
@@ -31,9 +31,9 @@ class EmailRemoteProcessor(SMTPServer):
             receiver=self.email.get('to'),
             contentType=self.email.get_content_type()
         )
-        newExpense = BudgetDatabase(systemVariables.budgetDatabasesPath)
-        newExpenseTimestamp = newExpense.EpochConverter(self.message.GetProperDateFormat())
-        newExpense.SetNewExpenses(timestamp=newExpenseTimestamp,date=self.message.GetProperDateFormat(),cost=self.message.GetExpenseFromSubject())
+        logger.info(self.message)
+        self.newExpense = BudgetDatabase(systemVariables.budgetDatabasesPath)
+        self.newExpense.SetNewExpenses(timestamp=self.message.GetProperDateFormat(),date=self.message.GetProperDateFormat(),name=self.message.subject,value=self.message.GetExpenseFromSubject(),was_payed=True)
         return self.accept()
 
 class EmailLocalProcessor:
@@ -101,7 +101,7 @@ class Email:
         """
         Get Proper Date Format from email
         """
-        original_date = datetime.datetime.strptime(self.date,'%a, %d %b %Y %H:%M:%S +0100')
+        original_date = datetime.datetime.strptime(self.date,'%a, %d %b %Y %H:%M:%S %z')
         year = original_date.strftime('%Y')
         month = original_date.strftime('%m')
         day = original_date.strftime('%d')
@@ -290,13 +290,11 @@ class Vizualizer(BudgetDatabase):
         expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
         income['type'] = 'income'
         expenses['type'] = 'expenses'
-        income['total'] = income['value'].sum()
-        expenses['total'] = expenses['value'].sum()
         data = income.append(expenses)
         if not data.empty:
             date_extracted = data['date'].str.split('-',expand=True)
             data['year'] = date_extracted[0]
-            fig = px.bar(data,x='year',y='total',color="type", title='Budget trends',barmode="group")
+            fig = px.bar(data,x='year',y='value',color="type", title='Budget trends',barmode="group")
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
