@@ -160,6 +160,13 @@ class BudgetDatabase:
             self.allIncomes = self.cur.execute('SELECT * FROM Incomes ORDER BY TIMESTAMP ASC;').fetchall()
         return self.allIncomes
 
+    def GetIncome(self,id):
+        self.id = id
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute('SELECT * FROM Incomes WHERE IncomeId='+str(self.id)+';')
+        return self.income
+
     def GetIncomesByDate(self,delta):
         self.delta = delta
         self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
@@ -213,7 +220,7 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.income = self.cur.execute("INSERT INTO Incomes (TIMESTAMP,DATE,VALUE,NAME) VALUES (%s, '%s', %s, '%s');" % (self.timestamp, self.date, self.value, self.name))
         self.conn.commit()
-        logger.info('New income has been added - value: '+self.value+' name: '+self.name)
+        logger.info('New income has been added - value: '+str(self.value)+' name: '+str(self.name))
         return 'New Income: '+str(self.value)+' PLN'
 
     def SetNewExpenses(self, timestamp=0, date=0, name='expenses', category=8, value=0, was_payed=False):
@@ -227,7 +234,7 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.expense = self.cur.execute("INSERT INTO Expenses (TIMESTAMP,DATE,VALUE,NAME,CATEGORY,WAS_PAYED) VALUES (%s, '%s', %s, '%s', '%s', %s);" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed))
         self.conn.commit()
-        logger.info('New expense has been added - value: '+self.value+' name: '+self.name)
+        logger.info('New expense has been added - value: '+str(self.value)+' name: '+str(self.name))
         return 'New Expense: '+str(self.value)+' PLN'
     
     def DelIncomes(self, id):
@@ -236,17 +243,30 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.income = self.cur.execute('DELETE FROM Incomes WHERE IncomeId=%s;' % (self.id))
         self.conn.commit()
-        logger.info('Income has been deleted - id: '+self.id)
-        return 'Total Changes: '+str(self.cur.rowcount)
+        logger.info('Income has been deleted - id: '+str(self.id))
+        return 'Income has been deleted - id: '+str(self.id)
 
     def DelExpenses(self, id):
         self.id = id
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute('DELETE FROM Expenses WHERE ExpenseId=%s;' % (self.id))
+        self.expense = self.cur.execute('DELETE FROM Expenses WHERE ExpenseId=%s;' % (self.id))
         self.conn.commit()
-        logger.info('Expense has been deleted - id: '+self.id)
-        return 'Total Changes: '+str(self.cur.rowcount)
+        logger.info('Expense has been deleted - id: '+str(self.id))
+        return 'Expense has been deleted - id: '+str(self.id)
+
+    def UpdateIncome(self,id, timestamp, date, value, name):
+        self.id = id
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
+        self.name = name
+        self.value = value
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute("UPDATE Incomes SET TIMESTAMP=%s,DATE='%s',VALUE=%s,NAME='%s' WHERE IncomeId=%s;" % (self.timestamp, self.date, self.value, self.name,self.id))
+        self.conn.commit()
+        logger.info('Income has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name))
+        return 'Income has been updated - id: '+str(self.id)+' timestamp: '+str(self.timestamp)+' date: '+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)
     
     def EpochConverter(self,date,convert=True):
         self.date = date
@@ -262,10 +282,12 @@ class Vizualizer(BudgetDatabase):
     """
     def PrintAllBudget(self):
         income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category != 'savings'")
+        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category == 'savings'")
         income['type'] = 'income'
         expenses['type'] = 'expenses'
-        data = income.append(expenses)
+        savings['type'] = 'savings'
+        data = income.append(expenses).append(savings)
         fig = px.bar(data,x='date',y='value',color="type", title='Budget summary',barmode='stack')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
@@ -273,11 +295,12 @@ class Vizualizer(BudgetDatabase):
     def PrintLast30DaysBudget(self):
         income = pd.DataFrame(self.GetIncomesByDate(30),columns=['index','timestamp','date','value','name'])
         expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
+        result = income['value'].sum() -  expenses['value'].sum()
         try:
             usage = (expenses['value'].sum() / income['value'].sum()) * 100
         except ZeroDivisionError:
             usage = 0
-        return income['value'].sum(),expenses['value'].sum(),usage
+        return income['value'].sum(),expenses['value'].sum(),usage,result
 
     def PrintLast30DaysExpenses(self):
         expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
@@ -287,10 +310,12 @@ class Vizualizer(BudgetDatabase):
 
     def PrintPreviousYearsBudget(self):
         income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category != 'savings'")
+        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category == 'savings'")
         income['type'] = 'income'
         expenses['type'] = 'expenses'
-        data = income.append(expenses)
+        savings['type'] = 'savings'
+        data = income.append(expenses).append(savings)
         if not data.empty:
             date_extracted = data['date'].str.split('-',expand=True)
             data['year'] = date_extracted[0]

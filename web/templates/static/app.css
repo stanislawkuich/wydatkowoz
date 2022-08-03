@@ -72,10 +72,10 @@ th {
     border: 1px solid black;
 }
 .form_navi button {
+    vertical-align: middle;
     padding: 6px 18px 5px 18px;
-    background-color: dodgerblue;
+    background-color: #fff;
     border: 1px solid black;
-    color: white;
 }
 #footer {
     background-color: #efefef;

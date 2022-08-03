@@ -54,7 +54,7 @@ If you want mount volume for persitance:
 
 Example:
 
-> podman run -d -p 8080:5000 -v /home/user:/app/data:Z localhost/wydatkowoz:latest
+> podman run -d -p 8080:5000 -p 8025:8025/tcp -v /home/user:/app/data:Z localhost/wydatkowoz:latest
 
 Remember to assign good permissions
 

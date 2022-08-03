@@ -1,0 +1,18 @@
+{% extends "index.html" %}
+{% block base %}
+<div id="form_box">
+    <p>Edit Income</p>
+    {% for item in items %}
+        <form class="form_navi" method="POST" action="{{ url_for('UpdateIncomes')}}">
+            <input type="hidden" name="id" value="{{ item[0] }}">
+            <label>Date</label>
+            <input type="date" name="income_date" value="{{ item[2] }}" required="required">
+            <label>Income</label>
+            <input type="text" name="income" value="{{ item[3] }}" required="required">
+            <label>Description</label>
+            <input type="text" value="{{ item[4] }}" name="description">
+            <input type="submit" value="Submit">
+        </form>
+    {% endfor %}
+</div>
+{% endblock %}

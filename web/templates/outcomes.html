@@ -21,10 +21,10 @@
             <option value=7>entertainment</option>
             <option value=8 selected>other</option>
         </select>
-        <label>Is payed?</label>
-        <input type="radio" name="ispayed" value="True" checked="checked">
+        <label>Was payed?</label>
+        <input type="radio" name="waspayed" value="True" checked="checked">
         yes
-        <input type="radio" name="ispayed" value="False">
+        <input type="radio" name="waspayed" value="False">
         no
         <input type="submit" value="Submit">
     </form>
@@ -35,7 +35,7 @@
         <th>Cost</th>
         <th>Description</th>
         <th>Category</th>
-        <th>isPayed?</th>
+        <th>wasPayed?</th>
     </tr>
     {% for item in items %}
     <tr>

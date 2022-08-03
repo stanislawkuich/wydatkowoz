@@ -1,4 +1,3 @@
-from optparse import Values
 import flask
 import logging
 from resources import utils, systemVariables
@@ -18,32 +17,46 @@ def index():
 @app.route('/api/v1/incomes',methods=['GET'])
 def Allincomes():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    #return flask.jsonify(db.GetAllIncomes())
-    return flask.render_template('incomes.html', items=db.GetAllIncomes())
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetAllIncomes())
+    else:
+        return flask.render_template('incomes.html', items=db.GetAllIncomes())
 
 @app.route('/api/v1/incomes/recently=<int:days>',methods=['GET'])
 def LastNdaysIncomes(days):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    #return flask.jsonify(db.GetIncomesByDate(id))
-    return flask.render_template('incomes.html', items=db.GetIncomesByDate(days))
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetIncomesByDate(days))
+    else:
+        return flask.render_template('incomes.html', items=db.GetIncomesByDate(days))
 
 @app.route('/api/v1/expenses',methods=['GET'])
 def Allexpenses():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    #return flask.jsonify(db.GetAllExpenses())
-    return flask.render_template('outcomes.html', items=db.GetAllExpenses())
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetAllExpenses())
+    else:
+        return flask.render_template('outcomes.html', items=db.GetAllExpenses())
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    #return flask.jsonify(db.GetExpensesByDate(id))
-    return flask.render_template('outcomes.html', items=db.GetExpensesByDate(days))
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetExpensesByDate(id))
+    else:
+        return flask.render_template('outcomes.html', items=db.GetExpensesByDate(days))
 
 @app.route('/api/v1/incomes',methods=['POST'])
 def NewIncomes():
-    date = flask.request.form['income_date']
-    income = flask.request.form['income']
-    description = flask.request.form['description']
+    if flask.request.content_type == 'application/json':
+        json_data = flask.request.json
+        date = json_data['date']
+        income = json_data['value']
+        description = json_data['name']
+    else:
+        date = flask.request.form['income_date']
+        income = flask.request.form['income']
+        description = flask.request.form['description']
     if description:
         data = {'date':date,'value':income, 'name':description}
     else:
@@ -55,8 +68,10 @@ def NewIncomes():
         response = db.SetNewIncomes(data['date'],data['date'],data['value'])
     else:
         response = db.SetNewIncomes(data['date'],data['date'],data['value'],data['name'])
-    #return flask.jsonify(response)
-    return flask.render_template('status.html', value=response)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(response)
+    else:
+        return flask.render_template('status.html', value=response)
 
 @app.route('/api/v1/expenses',methods=['POST'])
 def NewExpenses():
@@ -64,11 +79,11 @@ def NewExpenses():
     outcome = flask.request.form['outcome']
     description = flask.request.form['description']
     category = flask.request.form['category']
-    ispayed = flask.request.form['ispayed']
+    waspayed = flask.request.form['waspayed']
     if description:
-        data = {'date':date, 'value':outcome, 'name':description, 'category':int(category),'was_payed':ispayed}
+        data = {'date':date, 'value':outcome, 'name':description, 'category':int(category),'was_payed':waspayed}
     else:
-        data = {'date':date, 'value':outcome, 'name':'expenses', 'category':int(category),'was_payed':ispayed}
+        data = {'date':date, 'value':outcome, 'name':'expenses', 'category':int(category),'was_payed':waspayed}
     if 'date' not in data or 'value' not in data or 'was_payed' not in data:
         return 'Missing mandatory arguments...', 400
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
@@ -76,20 +91,56 @@ def NewExpenses():
         response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],was_payed=data['was_payed'])
     else:
         response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],name=data['name'],category=data['category'],was_payed=data['was_payed'])
-    #return flask.jsonify(response)
-    return flask.render_template('status.html', value=response)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(response)
+    else:
+        return flask.render_template('status.html', value=response)
 
-@app.route('/api/v1/incomes/id=<int:id>',methods=['DELETE'])
+@app.route('/api/v1/incomes/delete/<int:id>',methods=['DELETE','GET'])
 def DeleteIncomes(id):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    response = db.DelIncomes(id)
-    return flask.jsonify(response)
+    if flask.request.content_type == 'application/json':
+        if flask.request.method == 'DELETE':
+            response = db.DelIncomes(id)
+            return flask.jsonify(response)
+        else:
+            return 'Wrong method...', 500
+    else:
+        response = db.DelIncomes(id)
+        return flask.render_template('status.html', value=response)
+
+@app.route('/api/v1/incomes/edit/<int:id>',methods=['GET'])
+def EditIncome(id):
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    return flask.render_template('edit_income.html',items=db.GetIncome(id))
+
+@app.route('/api/v1/incomes/update',methods=['POST'])
+def UpdateIncomes():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        json_data = flask.request.json
+        id = json_data['id']
+        date = json_data['date']
+        income = json_data['value']
+        description = json_data['name']
+        response = db.UpdateIncome(id,date,date,income,description)
+        return flask.jsonify(response)
+    else:
+        id = flask.request.form['id']
+        date = flask.request.form['income_date']
+        income = flask.request.form['income']
+        description = flask.request.form['description']
+        response = db.UpdateIncome(id,date,date,income,description)
+        return flask.render_template('status.html', value=response)
 
 @app.route('/api/v1/expenses/id=<int:id>',methods=['DELETE'])
 def DeleteExpenses(id):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     response = db.DelExpenses(id)
-    return flask.jsonify(response)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(response)
+    else:
+        return flask.render_template('status.html', value=response)
 
 if __name__ == '__main__':
     app.run()
