@@ -17,12 +17,17 @@
         <th>Date</th>
         <th>Salary</th>
         <th>Description</th>
+        <th>Actions</th>
     </tr>
     {% for item in items %}
     <tr>
-    <td> {{ item[2] }}</td>
-    <td class="money"> {{ item[3] }}</td>
-    <td> {{ item[4] }}</td>
+    <td>{{ item[2] }}</td>
+    <td class="money">{{ item[3] }}</td>
+    <td>{{ item[4] }}</td>
+    <td>
+        <a href="{{ url_for('DeleteIncomes', id=item[0]) }}">Delete</a>
+        <a href="{{ url_for('EditIncome', id=item[0]) }}">Edit</a>
+    </td>
     </tr>
     {% endfor %}
 </table>

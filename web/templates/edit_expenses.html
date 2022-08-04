@@ -1,0 +1,35 @@
+{% extends "index.html" %}
+{% block base %}
+<div id="form_box">
+    <p>Edit Expenses</p>
+    {% for item in items %}
+        <form class="form_navi" method="POST" action="{{ url_for('UpdateExpenses')}}">
+            <input type="hidden" name="id" value="{{ item[0] }}">
+            <label>Date</label>
+            <input type="date" name="outcome_date" value="{{ item[2] }}" required="required">
+            <label>Expenses</label>
+            <input type="text" name="outcome" value="{{ item[3] }}" required="required">
+            <label>Description</label>
+            <input type="text" name="description" value="{{ item[4] }}">
+            <label>Category</label>
+            <select name="category">
+                <option value=0>rent</option>
+                <option value=1>savings</option>
+                <option value=2>telecommunication</option>
+                <option value=3>liabilities</option>
+                <option value=4>house_maintenance</option>
+                <option value=5>car_maintenance</option>
+                <option value=6>education</option>
+                <option value=7>entertainment</option>
+                <option value=8 selected>other</option>
+            </select>
+            <label>Was payed?</label>
+            <input type="radio" name="waspayed" value="True" checked="checked">
+            yes
+            <input type="radio" name="waspayed" value="False">
+            no
+            <input type="submit" value="Submit">
+        </form>
+    {% endfor %}
+</div>
+{% endblock %}

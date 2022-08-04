@@ -54,7 +54,7 @@ If you want mount volume for persitance:
 
 Example:
 
-> podman run -d -p 8080:5000 -v /home/user:/app/data:Z localhost/wydatkowoz:latest
+> podman run -d -p 8080:5000 -p 8025:8025/tcp -v /home/user:/app/data:Z localhost/wydatkowoz:latest
 
 Remember to assign good permissions
 
@@ -73,3 +73,61 @@ Remember to assign good permissions
 > systemctl --user start wydatkowoz.service
 
 > systemctl --user enable wydatkowoz.service
+
+## API documentation
+
+1. Get expenses
+
+```
+curl -k -H "Content-Type: application/json" http://127.0.0.1:8080/api/v1/expenses
+
+```
+
+2. Get incomes
+
+```
+curl -k -H "Content-Type: application/json" http://127.0.0.1:8080/api/v1/incomes
+
+```
+
+3. New expenses
+
+```
+curl -k -X POST -H "Content-Type: application/json" --data '{"date":"2022-08-02","value":2000,"name":"test2","category":2,"waspayed":false}' http://127.0.0.1:8080/api/v1/expenses
+
+```
+
+4. New income
+
+```
+curl -k -X POST -H "Content-Type: application/json" --data '{"id":1,"date":"2022-08-02","value":2000,"name":"test2"}' http://127.0.0.1:8080/api/v1/incomes
+
+```
+
+5. Update expenses
+
+```
+curl -k -X POST -H "Content-Type: application/json" --data '{"id":8,"date":"2022-08-02","value":2000,"name":"test2","category":2,"waspayed":false}' http://127.0.0.1:8080/api/v1/expenses/update
+
+```
+
+6. Update income
+
+```
+curl -k -X POST -H "Content-Type: application/json" --data '{"id":1,"date":"2022-08-02","value":2000,"name":"test2"}' http://127.0.0.1:8080/api/v1/incomes/update
+
+```
+
+7. Delete expenses
+
+```
+curl -k -X DELETE -H "Content-Type: application/json" http://127.0.0.1:8080/api/v1/expenses/delete/2
+
+```
+
+8. Delete income
+
+```
+curl -k -X DELETE -H "Content-Type: application/json" http://127.0.0.1:8080/api/v1/incomes/delete/2
+
+```
