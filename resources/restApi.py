@@ -75,11 +75,19 @@ def NewIncomes():
 
 @app.route('/api/v1/expenses',methods=['POST'])
 def NewExpenses():
-    date = flask.request.form['outcome_date']
-    outcome = flask.request.form['outcome']
-    description = flask.request.form['description']
-    category = flask.request.form['category']
-    waspayed = flask.request.form['waspayed']
+    if flask.request.content_type == 'application/json':
+        json_data = flask.request.json
+        date = json_data['date']
+        outcome = json_data['value']
+        description = json_data['name']
+        category = json_data['category']
+        waspayed = json_data['waspayed']
+    else:
+        date = flask.request.form['outcome_date']
+        outcome = flask.request.form['outcome']
+        description = flask.request.form['description']
+        category = flask.request.form['category']
+        waspayed = flask.request.form['waspayed']
     if description:
         data = {'date':date, 'value':outcome, 'name':description, 'category':int(category),'was_payed':waspayed}
     else:
@@ -133,13 +141,45 @@ def UpdateIncomes():
         response = db.UpdateIncome(id,date,date,income,description)
         return flask.render_template('status.html', value=response)
 
-@app.route('/api/v1/expenses/id=<int:id>',methods=['DELETE'])
+@app.route('/api/v1/expenses/delete/<int:id>',methods=['DELETE','GET'])
 def DeleteExpenses(id):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
-    response = db.DelExpenses(id)
     if flask.request.content_type == 'application/json':
+        if flask.request.method == 'DELETE':
+            response = db.DelExpenses(id)
+            return flask.jsonify(response)
+        else:
+            return 'Wrong method...', 500
+    else:
+        response = db.DelExpenses(id)
+        return flask.render_template('status.html', value=response)
+
+@app.route('/api/v1/expenses/edit/<int:id>',methods=['GET'])
+def EditExpenses(id):
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    return flask.render_template('edit_expenses.html',items=db.GetExpenses(id))
+
+@app.route('/api/v1/expenses/update',methods=['POST'])
+def UpdateExpenses():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        json_data = flask.request.json
+        id = json_data['id']
+        date = json_data['date']
+        outcome = json_data['value']
+        description = json_data['name']
+        category = json_data['category']
+        waspayed = json_data['waspayed']
+        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed)
         return flask.jsonify(response)
     else:
+        id = flask.request.form['id']
+        date = flask.request.form['outcome_date']
+        outcome = flask.request.form['outcome']
+        description = flask.request.form['description']
+        category = flask.request.form['category']
+        waspayed = flask.request.form['waspayed']
+        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed)
         return flask.render_template('status.html', value=response)
 
 if __name__ == '__main__':

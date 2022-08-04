@@ -194,6 +194,13 @@ class BudgetDatabase:
             self.allExpenses = self.cur.execute('SELECT * FROM Expenses ORDER BY TIMESTAMP ASC;').fetchall()
         return self.allExpenses
 
+    def GetExpenses(self,id):
+        self.id = id
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute('SELECT * FROM Expenses WHERE ExpenseId='+str(self.id)+';')
+        return self.income
+
     def GetExpensesByDate(self,delta):
         self.delta = delta
         self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
@@ -267,6 +274,21 @@ class BudgetDatabase:
         self.conn.commit()
         logger.info('Income has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name))
         return 'Income has been updated - id: '+str(self.id)+' timestamp: '+str(self.timestamp)+' date: '+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)
+
+    def UpdateExpenses(self,id, timestamp, date, value, name, category, was_payed):
+        self.id = id
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
+        self.name = name
+        self.value = value
+        self.category = systemVariables.ExpensesCategories[int(category)]
+        self.was_payed = was_payed
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute("UPDATE Expenses SET TIMESTAMP=%s,DATE='%s',VALUE=%s,NAME='%s',CATEGORY='%s',WAS_PAYED=%s WHERE ExpenseId=%s;" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed, self.id))
+        self.conn.commit()
+        logger.info('Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed))
+        return 'Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed)
     
     def EpochConverter(self,date,convert=True):
         self.date = date
@@ -289,6 +311,8 @@ class Vizualizer(BudgetDatabase):
         savings['type'] = 'savings'
         data = income.append(expenses).append(savings)
         fig = px.bar(data,x='date',y='value',color="type", title='Budget summary',barmode='stack')
+        average = px.line(expenses,x='date',y='value').update_traces(line_color="red")
+        fig.add_traces(average.data)
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
     
