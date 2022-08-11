@@ -340,10 +340,11 @@ class Vizualizer(BudgetDatabase):
         expenses['type'] = 'expenses'
         savings['type'] = 'savings'
         data = income.append(expenses).append(savings)
+        data_sorted = data.sort_values(by=['category'])
         if not data.empty:
-            date_extracted = data['date'].str.split('-',expand=True)
-            data['year'] = date_extracted[0]
-            fig = px.bar(data,x='year',y='value',color="type", title='Budget trends',barmode="group")
+            date_extracted = data_sorted['date'].str.split('-',expand=True)
+            data_sorted['year'] = date_extracted[0]
+            fig = px.bar(data_sorted,x='year',y='value',hover_data=['category'],color="type", title='Budget trends',barmode="group")
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
