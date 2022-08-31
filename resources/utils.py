@@ -167,6 +167,12 @@ class BudgetDatabase:
         self.income = self.cur.execute('SELECT * FROM Incomes WHERE IncomeId='+str(self.id)+';')
         return self.income
 
+    def GetLatestIncome(self):
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute('SELECT * FROM Incomes ORDER BY TIMESTAMP DESC LIMIT 1;').fetchall()
+        return self.income
+
     def GetIncomesByDate(self,delta):
         self.delta = delta
         self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
@@ -183,7 +189,6 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.FoundedIncomes = self.cur.execute('SELECT * FROM Incomes WHERE TIMESTAMP > '+str(self.EpochConverter(self.start_date))+' AND TIMESTAMP < '+str(self.EpochConverter(self.end_date))+' ORDER BY TIMESTAMP DESC;').fetchall()
         return self.FoundedIncomes
-
 
     def GetAllExpenses(self,desc_order=True):
         self.conn = sqlite3.connect(self.path)
@@ -215,8 +220,20 @@ class BudgetDatabase:
         self.end_date = end_date
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.FoundedIncomes = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.EpochConverter(self.start_date))+' AND TIMESTAMP < '+str(self.EpochConverter(self.end_date))+' ORDER BY TIMESTAMP DESC;').fetchall()
-        return self.FoundedIncomes
+        self.FoundedExpenses = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.EpochConverter(self.start_date))+' AND TIMESTAMP < '+str(self.EpochConverter(self.end_date))+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedExpenses
+
+    def GetExpensesSinceLastIncomes(self):
+        self.latestIncome = pd.DataFrame(self.GetLatestIncome(),columns=['index','timestamp','date','value','name'])
+        self.end_date = int((datetime.datetime.now()).timestamp())
+        if self.latestIncome.empty:
+            self.start_date = self.end_date
+        else:
+            self.start_date = int(self.latestIncome['timestamp'])
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedExpenses = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP >= '+str(self.start_date)+' AND TIMESTAMP <= '+str(self.end_date)+' ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedExpenses
 
     def SetNewIncomes(self, timestamp=0, date=0, value=0, name='income'):
         self.timestamp = self.EpochConverter(timestamp)
@@ -315,7 +332,17 @@ class Vizualizer(BudgetDatabase):
         fig.add_traces(average.data)
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
-    
+
+    def PrintBudgetSinceLastIncome(self):
+        income = pd.DataFrame(self.GetLatestIncome(),columns=['index','timestamp','date','value','name'])
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed'])
+        result = income['value'].sum() -  expenses['value'].sum()
+        try:
+            usage = (expenses['value'].sum() / income['value'].sum()) * 100
+        except ZeroDivisionError:
+            usage = 0
+        return income['value'].sum(),expenses['value'].sum(),usage,result
+
     def PrintLast30DaysBudget(self):
         income = pd.DataFrame(self.GetIncomesByDate(30),columns=['index','timestamp','date','value','name'])
         expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
@@ -329,6 +356,12 @@ class Vizualizer(BudgetDatabase):
     def PrintLast30DaysExpenses(self):
         expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
         fig = px.pie(expenses,values='value',names='category',title='Last 30 days expenses by category')
+        plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return plot_json
+
+    def PrintExpensesSinceLastIncome(self):
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed'])
+        fig = px.pie(expenses,values='value',names='category',title='Current expenses - time range between last income and current date')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 

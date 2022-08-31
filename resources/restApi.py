@@ -12,7 +12,7 @@ app.logger.setLevel(logging.WARNING)
 @app.route('/dashboard')
 def index():
     plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
-    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintLast30DaysBudget(),context3=plot.PrintLast30DaysExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses())
+    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintLast30DaysExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context6=plot.PrintExpensesSinceLastIncome())
 
 @app.route('/api/v1/incomes',methods=['GET'])
 def Allincomes():
@@ -30,6 +30,14 @@ def LastNdaysIncomes(days):
     else:
         return flask.render_template('incomes.html', items=db.GetIncomesByDate(days))
 
+@app.route('/api/v1/incomes/latest',methods=['GET'])
+def LatestIncomes():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetLatestIncome())
+    else:
+        return flask.render_template('incomes.html', items=db.GetLatestIncome())
+
 @app.route('/api/v1/expenses',methods=['GET'])
 def Allexpenses():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
@@ -45,6 +53,14 @@ def LastNDaysExpenses(days):
         return flask.jsonify(db.GetExpensesByDate(id))
     else:
         return flask.render_template('outcomes.html', items=db.GetExpensesByDate(days))
+
+@app.route('/api/v1/expenses/latest',methods=['GET'])
+def LatestExpenses():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetExpensesSinceLastIncomes())
+    else:
+        return flask.render_template('outcomes.html', items=db.GetExpensesSinceLastIncomes())
 
 @app.route('/api/v1/incomes',methods=['POST'])
 def NewIncomes():
