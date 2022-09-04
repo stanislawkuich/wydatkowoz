@@ -12,7 +12,7 @@ app.logger.setLevel(logging.WARNING)
 @app.route('/dashboard')
 def index():
     plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
-    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintLast30DaysExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context6=plot.PrintExpensesSinceLastIncome())
+    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintPreviousMonthsExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context6=plot.PrintExpensesSinceLastIncome())
 
 @app.route('/api/v1/incomes',methods=['GET'])
 def Allincomes():
