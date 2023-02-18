@@ -392,6 +392,17 @@ class Vizualizer(BudgetDatabase):
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
+    def PrintPreviousExpenses(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            fig = px.bar(expenses,x='month',y='value',color="category", title='Expenses trends (all)',barmode="stack")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+
+
     def PrintLast365DaysExpenses(self):
         expenses = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed'])
         fig = px.pie(expenses,values='value',names='category',title='Last 1 year expenses by category')
