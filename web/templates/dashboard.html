@@ -17,6 +17,7 @@
 <div id="sideplots">
     <div id="plotly-previousExpensesByCategory"></div>
     <div id="plotly-ExpensesPerMonths"></div>
+    <div id="plotly-ExpensesPerMonthsAll"></div>
 </div>
 <div id="plotly-timeseries"></div>
 <script>
@@ -26,10 +27,12 @@
     var graphs4 = {{ context4 | safe }};
     var graphs5 = {{ context5 | safe }};
     var graphs6 = {{ context6 | safe }};
+    var graphs7 = {{ context7 | safe }};
     Plotly.plot('plotly-timeseries', graphs1, {});
     Plotly.plot('plotly-ExpensesPerMonths', graphs3, {});
     Plotly.plot('plotly-previousBudgets', graphs4, {});
     Plotly.plot('plotly-previousExpensesByCategory', graphs5, {});
     Plotly.plot('plotly-ExpensesSinceLastIncome', graphs6, {});
+    Plotly.plot('plotly-ExpensesPerMonthsAll', graphs7, {});
 </script>
 {% endblock %}
