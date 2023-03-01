@@ -398,7 +398,7 @@ class Vizualizer(BudgetDatabase):
             date_extracted = expenses['date'].str.split('-',expand=True)
             expenses['year'] = date_extracted[0]
             expenses['month'] = date_extracted[1]
-            fig = px.bar(expenses,x='month',y='value',color="category", title='Expenses trends (all)',barmode="stack")
+            fig = px.bar(expenses,x='year',y='value',color="category", title='Expenses trends (all)',barmode="stack")
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
