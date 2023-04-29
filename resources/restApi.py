@@ -45,6 +45,14 @@ def Allexpenses():
         return flask.jsonify(db.GetAllExpenses())
     else:
         return flask.render_template('outcomes.html', items=db.GetAllExpenses())
+    
+@app.route('/api/v1/savings',methods=['GET'])
+def Allsavings():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetAllSavings())
+    else:
+        return flask.render_template('outcomes.html', items=db.GetAllSavings())
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):
