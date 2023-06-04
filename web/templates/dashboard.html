@@ -10,29 +10,37 @@
     <div id="numeric-status"><a href="{{ url_for('LatestIncomes')}}">Income: {{ context2[0] }} PLN</a></div>
     <div id="numeric-status"><a href="{{ url_for('LatestExpenses')}}">Outcome: {{ context2[1]}} PLN</a></div>
 </div>
-<div id="sideplots">
+<div id="form_box">
     <div id="plotly-ExpensesSinceLastIncome"></div>
-    <div id="plotly-previousBudgets"></div>
 </div>
 <div id="sideplots">
     <div id="plotly-previousExpensesByCategory"></div>
+    <div id="plotly-previousBudgets"></div>
+</div>
+<div id="sideplots">
     <div id="plotly-ExpensesPerMonths"></div>
+    <div id="plotly-ExpensesPerMonthsHistogram"></div>
     <div id="plotly-ExpensesPerMonthsAll"></div>
+    <div id="plotly-ExpensesPerMonthsAllHistogram"></div>
 </div>
 <div id="plotly-timeseries"></div>
 <script>
     //Parse your Json variable here
     var graphs1 = {{ context1 | safe }};
     var graphs3 = {{ context3 | safe }};
+    var graphs8 = {{ context8 | safe }};
     var graphs4 = {{ context4 | safe }};
     var graphs5 = {{ context5 | safe }};
     var graphs6 = {{ context6 | safe }};
     var graphs7 = {{ context7 | safe }};
+    var graphs9 = {{ context9 | safe }};
     Plotly.plot('plotly-timeseries', graphs1, {});
     Plotly.plot('plotly-ExpensesPerMonths', graphs3, {});
     Plotly.plot('plotly-previousBudgets', graphs4, {});
     Plotly.plot('plotly-previousExpensesByCategory', graphs5, {});
     Plotly.plot('plotly-ExpensesSinceLastIncome', graphs6, {});
     Plotly.plot('plotly-ExpensesPerMonthsAll', graphs7, {});
+    Plotly.plot('plotly-ExpensesPerMonthsHistogram', graphs8, {});
+    Plotly.plot('plotly-ExpensesPerMonthsAllHistogram', graphs9, {});
 </script>
 {% endblock %}

@@ -392,6 +392,18 @@ class Vizualizer(BudgetDatabase):
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
+    def PrintPreviousMonthsExpensesHistogram(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        currentYear = int(datetime.datetime.now().year)
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.histogram(currentExpenses,x='month',y='value',color="category",barnorm='percent',title='Expenses trends - percentage')
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+
     def PrintPreviousExpenses(self):
         expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
         if not expenses.empty:
@@ -399,6 +411,16 @@ class Vizualizer(BudgetDatabase):
             expenses['year'] = date_extracted[0]
             expenses['month'] = date_extracted[1]
             fig = px.bar(expenses,x='year',y='value',color="category", title='Expenses trends (all)',barmode="stack")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+        
+    def PrintPreviousExpensesHistogram(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            fig = px.histogram(expenses,x='year',y='value',color="category",barnorm='percent', title='Expenses trends (all) - percentage')
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
