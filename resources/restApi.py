@@ -12,7 +12,7 @@ app.logger.setLevel(logging.WARNING)
 @app.route('/dashboard')
 def index():
     plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
-    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintPreviousMonthsExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context7=plot.PrintPreviousExpenses(),context8=plot.PrintPreviousMonthsExpensesHistogram(),context9=plot.PrintPreviousExpensesHistogram(),context10=plot.PrintExpensesSinceLastIncomeByType())
+    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintPreviousMonthsExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context7=plot.PrintPreviousExpenses(),context8=plot.PrintPreviousMonthsExpensesHistogram(),context9=plot.PrintPreviousExpensesHistogram(),context10=plot.PrintExpensesSinceLastIncomeByType(),context11=plot.PrintPreviousMonthsExpensesByType(),context12=plot.PrintPreviousMonthsExpensesHistogramByType())
 
 @app.route('/api/v1/incomes',methods=['GET'])
 def Allincomes():
@@ -46,13 +46,13 @@ def Allexpenses():
     else:
         return flask.render_template('outcomes.html', items=db.GetAllExpenses())
     
-@app.route('/api/v1/savings',methods=['GET'])
-def Allsavings():
+@app.route('/api/v1/investments',methods=['GET'])
+def Allinvestments():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     if flask.request.content_type == 'application/json':
-        return flask.jsonify(db.GetAllSavings())
+        return flask.jsonify(db.GetAllSInvestments())
     else:
-        return flask.render_template('outcomes.html', items=db.GetAllSavings())
+        return flask.render_template('investments.html', items=db.GetAllInvestments())
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):

@@ -14,4 +14,8 @@ ExpensesCategories = ['rent','savings','telecommunication','liabilities','house_
 
 # types of expenses
 # 0 - needs, 1 - wants, 2 - savings
-ExpensesTypes = ['needs','wants','savings']
+ExpensesTypes = ['needs','wants','savings/investments']
+
+# category of expenses
+# 0 - retirement, 1 - safety debt, 2 - vacations, 3 - loans
+InvestmentsCategories = ['retirement','safety debt','safety debt','vacations','loans']

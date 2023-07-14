@@ -400,6 +400,18 @@ class Vizualizer(BudgetDatabase):
             fig = px.bar(currentExpenses,x='month',y='value',color="category", title='Expenses trends',barmode="stack")
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
+        
+    def PrintPreviousMonthsExpensesByType(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        currentYear = int(datetime.datetime.now().year)
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.bar(currentExpenses,x='month',y='value',color="type", title='Expenses trends by Type',barmode="stack")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
 
     def PrintPreviousMonthsExpensesHistogram(self):
         expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
@@ -410,6 +422,18 @@ class Vizualizer(BudgetDatabase):
             expenses['month'] = date_extracted[1]
             currentExpenses = expenses.query("year == '{}'".format(currentYear))
             fig = px.histogram(currentExpenses,x='month',y='value',color="category",barnorm='percent',title='Expenses trends - percentage')
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+        
+    def PrintPreviousMonthsExpensesHistogramByType(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        currentYear = int(datetime.datetime.now().year)
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.histogram(currentExpenses,x='month',y='value',color="type",barnorm='percent',title='Expenses trends by Type - percentage')
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 

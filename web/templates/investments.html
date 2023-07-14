@@ -1,7 +1,7 @@
 {% extends "index.html" %}
 {% block base %}
 <div id="form_box">
-    <p>Budget Usage</p>
+    <p>Savings</p>
     <div id="numeric-status">{{ context2[2] }}</div>%
     <div id="numeric-status">{{ context2[3] }}</div> PLN
 </div>
@@ -18,8 +18,6 @@
     <div id="plotly-previousBudgets"></div>
 </div>
 <div id="sideplots">
-    <div id="plotly-ExpensesPerMonthsAllByType"></div>
-    <div id="plotly-ExpensesPerMonthsHistogramByType"></div>
     <div id="plotly-ExpensesPerMonths"></div>
     <div id="plotly-ExpensesPerMonthsHistogram"></div>
     <div id="plotly-ExpensesPerMonthsAll"></div>
@@ -37,8 +35,6 @@
     var graphs7 = {{ context7 | safe }};
     var graphs9 = {{ context9 | safe }};
     var graphs10 = {{ context10 | safe }};
-    var graphs11 = {{ context11 | safe }};
-    var graphs12 = {{ context12 | safe }};
     Plotly.plot('plotly-timeseries', graphs1, {});
     Plotly.plot('plotly-ExpensesPerMonths', graphs3, {});
     Plotly.plot('plotly-previousBudgets', graphs4, {});
@@ -48,7 +44,5 @@
     Plotly.plot('plotly-ExpensesPerMonthsHistogram', graphs8, {});
     Plotly.plot('plotly-ExpensesPerMonthsAllHistogram', graphs9, {});
     Plotly.plot('plotly-ExpensesSinceLastIncomeByType', graphs10, {});
-    Plotly.plot('plotly-ExpensesPerMonthsAllByType', graphs11, {});
-    Plotly.plot('plotly-ExpensesPerMonthsHistogramByType', graphs12, {});
 </script>
 {% endblock %}
