@@ -145,7 +145,8 @@ class BudgetDatabase:
                 [VALUE] REAL(50) NOT NULL,
                 [NAME] TEXT NOT NULL,
                 [CATEGORY] INTEGER(2) NOT NULL,
-                [WAS_PAYED] INTEGER NOT NULL
+                [WAS_PAYED] INTEGER NOT NULL,
+                [TYPE] INTEGER(2) NOT NULL
             );
             """
         )
@@ -247,16 +248,17 @@ class BudgetDatabase:
         logger.info('New income has been added - value: '+str(self.value)+' name: '+str(self.name))
         return 'New Income: '+str(self.value)+' PLN'
 
-    def SetNewExpenses(self, timestamp=0, date=0, name='expenses', category=8, value=0, was_payed=False):
+    def SetNewExpenses(self, timestamp=0, date=0, name='expenses', category=8, value=0, was_payed=False,type=1):
         self.timestamp = self.EpochConverter(timestamp)
         self.date = date
         self.name = name
         self.category = systemVariables.ExpensesCategories[category]
         self.value = value
         self.was_payed = was_payed
+        self.type = systemVariables.ExpensesTypes[type]
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.expense = self.cur.execute("INSERT INTO Expenses (TIMESTAMP,DATE,VALUE,NAME,CATEGORY,WAS_PAYED) VALUES (%s, '%s', %s, '%s', '%s', %s);" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed))
+        self.expense = self.cur.execute("INSERT INTO Expenses (TIMESTAMP,DATE,VALUE,NAME,CATEGORY,WAS_PAYED,TYPE) VALUES (%s, '%s', %s, '%s', '%s', %s, '%s');" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed, self.type))
         self.conn.commit()
         logger.info('New expense has been added - value: '+str(self.value)+' name: '+str(self.name))
         return 'New Expense: '+str(self.value)+' PLN'
@@ -292,7 +294,7 @@ class BudgetDatabase:
         logger.info('Income has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name))
         return 'Income has been updated - id: '+str(self.id)+' timestamp: '+str(self.timestamp)+' date: '+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)
 
-    def UpdateExpenses(self,id, timestamp, date, value, name, category, was_payed):
+    def UpdateExpenses(self,id, timestamp, date, value, name, category, was_payed, type):
         self.id = id
         self.timestamp = self.EpochConverter(timestamp)
         self.date = date
@@ -300,12 +302,13 @@ class BudgetDatabase:
         self.value = value
         self.category = systemVariables.ExpensesCategories[int(category)]
         self.was_payed = was_payed
+        self.type = systemVariables.ExpensesTypes[int(type)]
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
-        self.income = self.cur.execute("UPDATE Expenses SET TIMESTAMP=%s,DATE='%s',VALUE=%s,NAME='%s',CATEGORY='%s',WAS_PAYED=%s WHERE ExpenseId=%s;" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed, self.id))
+        self.income = self.cur.execute("UPDATE Expenses SET TIMESTAMP=%s,DATE='%s',VALUE=%s,NAME='%s',CATEGORY='%s',WAS_PAYED=%s,TYPE='%s' WHERE ExpenseId=%s;" % (self.timestamp, self.date, self.value, self.name, self.category, self.was_payed, self.type, self.id))
         self.conn.commit()
-        logger.info('Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed))
-        return 'Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed)
+        logger.info('Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed)+' type: '+str(self.type))
+        return 'Expense has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' category: '+str(self.category)+' was_payed: '+str(self.was_payed)+' type: '+str(self.type)
     
     def EpochConverter(self,date,convert=True):
         self.date = date
@@ -321,8 +324,8 @@ class Vizualizer(BudgetDatabase):
     """
     def PrintAllBudget(self):
         income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category != 'savings'")
-        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category == 'savings'")
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category != 'savings'")
+        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
         income['type'] = 'income'
         expenses['type'] = 'expenses'
         savings['type'] = 'savings'
@@ -335,7 +338,7 @@ class Vizualizer(BudgetDatabase):
 
     def PrintBudgetSinceLastIncome(self):
         income = pd.DataFrame(self.GetLatestIncome(),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         result = income['value'].sum() -  expenses['value'].sum()
         try:
             usage = (expenses['value'].sum() / income['value'].sum()) * 100
@@ -345,7 +348,7 @@ class Vizualizer(BudgetDatabase):
 
     def PrintLast30DaysBudget(self):
         income = pd.DataFrame(self.GetIncomesByDate(30),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         result = income['value'].sum() -  expenses['value'].sum()
         try:
             usage = (expenses['value'].sum() / income['value'].sum()) * 100
@@ -354,21 +357,27 @@ class Vizualizer(BudgetDatabase):
         return income['value'].sum(),expenses['value'].sum(),usage,result
 
     def PrintLast30DaysExpenses(self):
-        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetExpensesByDate(30),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         fig = px.pie(expenses,values='value',names='category',title='Last 30 days expenses by category')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 
     def PrintExpensesSinceLastIncome(self):
-        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         fig = px.pie(expenses,values='value',names='category',title='Current expenses - time range between last income and current date')
+        plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return plot_json
+    
+    def PrintExpensesSinceLastIncomeByType(self):
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        fig = px.pie(expenses,values='value',names='type',title='Current expenses - 50/30/20 budget')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 
     def PrintPreviousYearsBudget(self):
         income = pd.DataFrame(self.GetAllIncomes(desc_order=False),columns=['index','timestamp','date','value','name'])
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category != 'savings'")
-        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed']).query("category == 'savings'")
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category != 'savings'")
+        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
         income['type'] = 'income'
         expenses['type'] = 'expenses'
         savings['type'] = 'savings'
@@ -381,7 +390,7 @@ class Vizualizer(BudgetDatabase):
             return plot_json
 
     def PrintPreviousMonthsExpenses(self):
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         currentYear = int(datetime.datetime.now().year)
         if not expenses.empty:
             date_extracted = expenses['date'].str.split('-',expand=True)
@@ -391,20 +400,66 @@ class Vizualizer(BudgetDatabase):
             fig = px.bar(currentExpenses,x='month',y='value',color="category", title='Expenses trends',barmode="stack")
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
-
-    def PrintPreviousExpenses(self):
-        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed'])
+        
+    def PrintPreviousMonthsExpensesByType(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        currentYear = int(datetime.datetime.now().year)
         if not expenses.empty:
             date_extracted = expenses['date'].str.split('-',expand=True)
             expenses['year'] = date_extracted[0]
             expenses['month'] = date_extracted[1]
-            fig = px.bar(expenses,x='month',y='value',color="category", title='Expenses trends (all)',barmode="stack")
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.bar(currentExpenses,x='month',y='value',color="type", title='Expenses trends by Type',barmode="stack")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+
+    def PrintPreviousMonthsExpensesHistogram(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        currentYear = int(datetime.datetime.now().year)
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.histogram(currentExpenses,x='month',y='value',color="category",barnorm='percent',title='Expenses trends - percentage')
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+        
+    def PrintPreviousMonthsExpensesHistogramByType(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        currentYear = int(datetime.datetime.now().year)
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            currentExpenses = expenses.query("year == '{}'".format(currentYear))
+            fig = px.histogram(currentExpenses,x='month',y='value',color="type",barnorm='percent',title='Expenses trends by Type - percentage')
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+
+    def PrintPreviousExpenses(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            fig = px.bar(expenses,x='year',y='value',color="category", title='Expenses trends (all)',barmode="stack")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+        
+    def PrintPreviousExpensesHistogram(self):
+        expenses = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        if not expenses.empty:
+            date_extracted = expenses['date'].str.split('-',expand=True)
+            expenses['year'] = date_extracted[0]
+            expenses['month'] = date_extracted[1]
+            fig = px.histogram(expenses,x='year',y='value',color="category",barnorm='percent', title='Expenses trends (all) - percentage')
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
 
     def PrintLast365DaysExpenses(self):
-        expenses = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed'])
+        expenses = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         fig = px.pie(expenses,values='value',names='category',title='Last 1 year expenses by category')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json

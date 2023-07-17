@@ -20,6 +20,14 @@
             <option value=6>6 - education</option>
             <option value=7>7 - entertainment</option>
             <option value=8 selected>8 - other</option>
+            <option value=9>9 - insurance</option>
+            <option value=10>10 - health_care</option>
+        </select>
+        <label>Type</label>
+        <select name="type">
+            <option value=0>0 - needs</option>
+            <option value=1 selected>1 - wants</option>
+            <option value=2>2 - savings/investments</option>
         </select>
         <label>Was payed?</label>
         <input type="radio" name="waspayed" value="True" checked="checked">
@@ -36,6 +44,7 @@
         <th>Description</th>
         <th>Category</th>
         <th>wasPayed?</th>
+        <th>Type</th>
         <th>Actions</th>
     </tr>
     {% for item in items %}
@@ -45,6 +54,7 @@
     <td> {{ item[4] }}</td>
     <td> {{ item[5] }}</td>
     <td> {{ item[6] }}</td>
+    <td> {{ item[7] }}</td>
     <td>
         <a href="{{ url_for('DeleteExpenses', id=item[0]) }}">Delete</a>
         <a href="{{ url_for('EditExpenses', id=item[0]) }}">Edit</a>

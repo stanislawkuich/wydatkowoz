@@ -12,7 +12,7 @@ app.logger.setLevel(logging.WARNING)
 @app.route('/dashboard')
 def index():
     plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
-    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintPreviousMonthsExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context6=plot.PrintExpensesSinceLastIncome(),context7=plot.PrintPreviousExpenses())
+    return flask.render_template('dashboard.html', title='Wydatkowoz',context1=plot.PrintAllBudget(),context2=plot.PrintBudgetSinceLastIncome(),context3=plot.PrintPreviousMonthsExpenses(),context4=plot.PrintPreviousYearsBudget(),context5=plot.PrintLast365DaysExpenses(),context7=plot.PrintPreviousExpenses(),context8=plot.PrintPreviousMonthsExpensesHistogram(),context9=plot.PrintPreviousExpensesHistogram(),context10=plot.PrintExpensesSinceLastIncomeByType(),context11=plot.PrintPreviousMonthsExpensesByType(),context12=plot.PrintPreviousMonthsExpensesHistogramByType())
 
 @app.route('/api/v1/incomes',methods=['GET'])
 def Allincomes():
@@ -45,6 +45,14 @@ def Allexpenses():
         return flask.jsonify(db.GetAllExpenses())
     else:
         return flask.render_template('outcomes.html', items=db.GetAllExpenses())
+    
+@app.route('/api/v1/investments',methods=['GET'])
+def Allinvestments():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(db.GetAllSInvestments())
+    else:
+        return flask.render_template('investments.html', items=db.GetAllInvestments())
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):
@@ -98,23 +106,25 @@ def NewExpenses():
         description = json_data['name']
         category = json_data['category']
         waspayed = json_data['waspayed']
+        type = json_data['type']
     else:
         date = flask.request.form['outcome_date']
         outcome = flask.request.form['outcome']
         description = flask.request.form['description']
         category = flask.request.form['category']
         waspayed = flask.request.form['waspayed']
+        type = flask.request.form['type']
     if description:
-        data = {'date':date, 'value':outcome, 'name':description, 'category':int(category),'was_payed':waspayed}
+        data = {'date':date, 'value':outcome, 'name':description, 'category':int(category),'was_payed':waspayed,'type':int(type)}
     else:
-        data = {'date':date, 'value':outcome, 'name':'expenses', 'category':int(category),'was_payed':waspayed}
+        data = {'date':date, 'value':outcome, 'name':'expenses', 'category':int(category),'was_payed':waspayed,'type':int(type)}
     if 'date' not in data or 'value' not in data or 'was_payed' not in data:
         return 'Missing mandatory arguments...', 400
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     if 'name' not in data or 'category' not in data:
-        response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],was_payed=data['was_payed'])
+        response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],was_payed=data['was_payed'],type=data['type'])
     else:
-        response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],name=data['name'],category=data['category'],was_payed=data['was_payed'])
+        response = db.SetNewExpenses(timestamp=data['date'],date=data['date'],value=data['value'],name=data['name'],category=data['category'],was_payed=data['was_payed'],type=data['type'])
     if flask.request.content_type == 'application/json':
         return flask.jsonify(response)
     else:
@@ -186,7 +196,8 @@ def UpdateExpenses():
         description = json_data['name']
         category = json_data['category']
         waspayed = json_data['waspayed']
-        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed)
+        type = json_data['type']
+        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed,type)
         return flask.jsonify(response)
     else:
         id = flask.request.form['id']
@@ -195,7 +206,8 @@ def UpdateExpenses():
         description = flask.request.form['description']
         category = flask.request.form['category']
         waspayed = flask.request.form['waspayed']
-        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed)
+        type = flask.request.form['type']
+        response = db.UpdateExpenses(id,date,date,outcome,description,category,waspayed,type)
         return flask.render_template('status.html', value=response)
 
 if __name__ == '__main__':

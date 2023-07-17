@@ -13,15 +13,23 @@
             <input type="text" name="description" value="{{ item[4] }}">
             <label>Category</label>
             <select name="category">
-                <option value=0>rent</option>
-                <option value=1>savings</option>
-                <option value=2>telecommunication</option>
-                <option value=3>liabilities</option>
-                <option value=4>house_maintenance</option>
-                <option value=5>car_maintenance</option>
-                <option value=6>education</option>
-                <option value=7>entertainment</option>
-                <option value=8 selected>other</option>
+                <option value=0>0 - rent</option>
+                <option value=1>1 - savings</option>
+                <option value=2>2 - telecommunication</option>
+                <option value=3>3 - liabilities</option>
+                <option value=4>4 - house_maintenance</option>
+                <option value=5>5 - car_maintenance</option>
+                <option value=6>6 - education</option>
+                <option value=7>7 - entertainment</option>
+                <option value=8 selected>8 - other</option>
+                <option value=9>9 - insurance</option>
+                <option value=10>10 - health_care</option>
+            </select>
+            <label>Type</label>
+            <select name="type">
+                <option value=0 selected>0 - needs</option>
+                <option value=1>1 - wants</option>
+                <option value=2>2 - savings/investments</option>
             </select>
             <label>Was payed?</label>
             <input type="radio" name="waspayed" value="True" checked="checked">
