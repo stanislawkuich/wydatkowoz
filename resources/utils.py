@@ -370,7 +370,11 @@ class Vizualizer(BudgetDatabase):
     
     def PrintExpensesSinceLastIncomeByType(self):
         expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type'])
-        fig = px.pie(expenses,values='value',names='type',title='Current expenses - 50/30/20 budget')
+        income = pd.DataFrame(self.GetLatestIncome(),columns=['index','timestamp','date','value','name'])
+        income['type'] = 'unclassified income'
+        income['value'] = income['value'] - sum(expenses['value'])
+        data = income.append(expenses)
+        fig = px.pie(data,values='value',names='type',title='Current expenses - 50/30/20 budget')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 
