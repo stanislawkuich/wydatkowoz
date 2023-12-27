@@ -369,11 +369,13 @@ class Vizualizer(BudgetDatabase):
         return plot_json
     
     def PrintExpensesSinceLastIncomeByType(self):
-        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        expenses = pd.DataFrame(self.GetExpensesSinceLastIncomes(),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("was_payed == 1")
         income = pd.DataFrame(self.GetLatestIncome(),columns=['index','timestamp','date','value','name'])
+        expenses_unpaid = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("was_payed == 0")
+        expenses_unpaid['type'] = 'unpaid expenses'
         income['type'] = 'unclassified income'
-        income['value'] = income['value'] - sum(expenses['value'])
-        data = income.append(expenses)
+        income['value'] = income['value'] - sum(expenses['value']) - sum(expenses_unpaid['value'])
+        data = income.append(expenses).append(expenses_unpaid)
         fig = px.pie(data,values='value',names='type',title='Current expenses - 50/30/20 budget')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
