@@ -1,48 +1,79 @@
 {% extends "index.html" %}
 {% block base %}
-<div id="form_box">
-    <p>Savings</p>
-    <div id="numeric-status">{{ context2[2] }}</div>%
-    <div id="numeric-status">{{ context2[3] }}</div> PLN
-</div>
-<div id="form_box">
-    <p>Current budget state - time range between last income and current date</p>
-    <div id="numeric-status"><a href="{{ url_for('LatestIncomes')}}">Income: {{ context2[0] }} PLN</a></div>
-    <div id="numeric-status"><a href="{{ url_for('LatestExpenses')}}">Outcome: {{ context2[1]}} PLN</a></div>
-</div>
-<div id="form_box">
-    <div id="plotly-ExpensesSinceLastIncomeByType"></div>
-</div>
 <div id="sideplots">
-    <div id="plotly-previousExpensesByCategory"></div>
-    <div id="plotly-previousBudgets"></div>
+    <div id="plotly-PrintSavingsTrends"></div>
+    <div id="plotly-PrintPreviousYearSavings"></div>
 </div>
-<div id="sideplots">
-    <div id="plotly-ExpensesPerMonths"></div>
-    <div id="plotly-ExpensesPerMonthsHistogram"></div>
-    <div id="plotly-ExpensesPerMonthsAll"></div>
-    <div id="plotly-ExpensesPerMonthsAllHistogram"></div>
+<div id="form_box">
+    <p>Add New Investment</p>
+    <form class="form_navi" method="POST" action="{{ url_for('NewInvestment')}}">
+        <label>Date</label>
+        <input type="date" name="outcome_date" required="required">
+        <label>Expenses</label>
+        <input type="text" name="outcome" required="required">
+        <label>Description</label>
+        <input type="text" name="description">
+        <label>Category</label>
+        <select name="category">
+            <option value=0>0 - rent</option>
+            <option value=1>1 - savings</option>
+            <option value=2>2 - telecommunication</option>
+            <option value=3>3 - liabilities</option>
+            <option value=4>4 - house_maintenance</option>
+            <option value=5>5 - car_maintenance</option>
+            <option value=6>6 - education</option>
+            <option value=7>7 - entertainment</option>
+            <option value=8 selected>8 - other</option>
+            <option value=9>9 - insurance</option>
+            <option value=10>10 - health_care</option>
+            <option value=11>11 - food</option>
+            <option value=12>12 - retirement</option>
+            <option value=13>13 - vacation</option>
+        </select>
+        <label>Type</label>
+        <select name="type">
+            <option value=0>0 - needs</option>
+            <option value=1 selected>1 - wants</option>
+            <option value=2>2 - savings/investments</option>
+        </select>
+        <label>Was payed?</label>
+        <input type="radio" name="waspayed" value="True" checked="checked">
+        yes
+        <input type="radio" name="waspayed" value="False">
+        no
+        <input type="submit" value="Submit">
+    </form>
 </div>
-<div id="plotly-timeseries"></div>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Cost</th>
+        <th>Description</th>
+        <th>Category</th>
+        <th>wasPayed?</th>
+        <th>Type</th>
+        <th>Actions</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+    <td> {{ item[2] }}</td>
+    <td class="money"> {{ item[3] }}</td>
+    <td> {{ item[4] }}</td>
+    <td> {{ item[5] }}</td>
+    <td> {{ item[6] }}</td>
+    <td> {{ item[7] }}</td>
+    <td>
+        <a href="{{ url_for('DeleteExpenses', id=item[0]) }}">Delete</a>
+        <a href="{{ url_for('EditExpenses', id=item[0]) }}">Edit</a>
+    </td>
+    </tr>
+    {% endfor %}
+</table>
 <script>
     //Parse your Json variable here
     var graphs1 = {{ context1 | safe }};
-    var graphs3 = {{ context3 | safe }};
-    var graphs8 = {{ context8 | safe }};
-    var graphs4 = {{ context4 | safe }};
-    var graphs5 = {{ context5 | safe }};
-    //var graphs6 = {{ context6 | safe }};
-    var graphs7 = {{ context7 | safe }};
-    var graphs9 = {{ context9 | safe }};
-    var graphs10 = {{ context10 | safe }};
-    Plotly.plot('plotly-timeseries', graphs1, {});
-    Plotly.plot('plotly-ExpensesPerMonths', graphs3, {});
-    Plotly.plot('plotly-previousBudgets', graphs4, {});
-    Plotly.plot('plotly-previousExpensesByCategory', graphs5, {});
-    //Plotly.plot('plotly-ExpensesSinceLastIncome', graphs6, {});
-    Plotly.plot('plotly-ExpensesPerMonthsAll', graphs7, {});
-    Plotly.plot('plotly-ExpensesPerMonthsHistogram', graphs8, {});
-    Plotly.plot('plotly-ExpensesPerMonthsAllHistogram', graphs9, {});
-    Plotly.plot('plotly-ExpensesSinceLastIncomeByType', graphs10, {});
+    var graphs2 = {{ context2 | safe }};
+    Plotly.plot('plotly-PrintSavingsTrends', graphs1, {});
+    Plotly.plot('plotly-PrintPreviousYearSavings', graphs2, {});
 </script>
 {% endblock %}

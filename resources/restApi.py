@@ -20,7 +20,7 @@ def Allincomes():
     if flask.request.content_type == 'application/json':
         return flask.jsonify(db.GetAllIncomes())
     else:
-        return flask.render_template('incomes.html', items=db.GetAllIncomes())
+        return flask.render_template('incomes.html', title="Incomes", items=db.GetAllIncomes())
 
 @app.route('/api/v1/incomes/recently=<int:days>',methods=['GET'])
 def LastNdaysIncomes(days):
@@ -44,15 +44,41 @@ def Allexpenses():
     if flask.request.content_type == 'application/json':
         return flask.jsonify(db.GetAllExpenses())
     else:
-        return flask.render_template('outcomes.html', items=db.GetAllExpenses())
+        return flask.render_template('outcomes.html', title="Expenses", items=db.GetAllExpenses())
     
 @app.route('/api/v1/investments',methods=['GET'])
 def Allinvestments():
-    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
+    return flask.render_template('investments.html', title="Savings/Investments",context1=plot.PrintSavingsTrends(),context2=plot.PrintPreviousYearSavings())
+
+@app.route('/api/v1/investment',methods=['POST'])
+def NewInvestment():
+    #TODO
+    #Ongoing work
     if flask.request.content_type == 'application/json':
-        return flask.jsonify(db.GetAllSInvestments())
+        json_data = flask.request.json
+        date = json_data['date']
+        income = json_data['value']
+        description = json_data['name']
     else:
-        return flask.render_template('investments.html', items=db.GetAllInvestments())
+        date = flask.request.form['income_date']
+        income = flask.request.form['income']
+        description = flask.request.form['description']
+    if description:
+        data = {'date':date,'value':income, 'name':description}
+    else:
+        data = {'date':date,'value':income}
+    if 'date' not in data or 'value' not in data:
+        return 'Missing mandatory arguments...', 400
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if 'name' not in data:
+        response = db.SetNewIncomes(data['date'],data['date'],data['value'])
+    else:
+        response = db.SetNewIncomes(data['date'],data['date'],data['value'],data['name'])
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(response)
+    else:
+        return flask.render_template('status.html', value=response)
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):

@@ -317,6 +317,24 @@ class BudgetDatabase:
         else:
             self.outputTime = datetime.datetime.fromtimestamp(self.date)
         return self.outputTime
+    
+    def GetAllInvestments(self,desc_order=True):
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        if desc_order:
+            self.allInvestments = self.cur.execute('SELECT * FROM Expenses WHERE type == "savings/investments" ORDER BY TIMESTAMP DESC;').fetchall()
+        else:
+            self.allInvestments = self.cur.execute('SELECT * FROM Expenses WHERE type == "savings/investments" ORDER BY TIMESTAMP ASC;').fetchall()
+        return self.allInvestments
+    
+    def GetInvestmentByDate(self,delta):
+        self.delta = delta
+        self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
+        self.delta_timestamp = datetime.timedelta(days=self.delta)
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.FoundedIncomes = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.lastNdays)+' AND type == "savings/investments" ORDER BY TIMESTAMP DESC;').fetchall()
+        return self.FoundedIncomes
 
 class Vizualizer(BudgetDatabase):
     """
@@ -463,10 +481,47 @@ class Vizualizer(BudgetDatabase):
             plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             return plot_json
 
-
     def PrintLast365DaysExpenses(self):
         expenses = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         fig = px.pie(expenses,values='value',names='category',title='Last 1 year expenses by category')
+        plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return plot_json
+    
+    def PrintSavingsTrends(self):
+        investments = pd.DataFrame(self.GetAllInvestments(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
+        retirement = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'retirement'")
+        vacation = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'vacation'")
+        savings['type'] = 'savings'
+        retirement['type'] = 'retirement'
+        vacation['type'] = 'vacation'
+        investments['type'] = 'investments'
+        data = investments.append(savings).append(retirement).append(vacation)
+        if not data.empty:
+            date_extracted = data['date'].str.split('-',expand=True)
+            data['year'] = date_extracted[0]
+            fig = px.bar(data,x='year',y='value',color="type", title='Savings trends',barmode="group")
+            plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            return plot_json
+        
+    def PrintPreviousYearSavings(self):
+        investments = pd.DataFrame(self.GetInvestmentByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        savings = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
+        savings['type'] = 'savings'
+        retirement = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'retirement'")
+        retirement['type'] = 'retirement'
+        vacation = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'vacation'")
+        vacation['type'] = 'vacation'
+        safety_debt = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
+        safety_debt['type'] = 'safety_debt' 
+        try:
+            safety_debt['value'] = sum(safety_debt['value']) / 2
+        except ZeroDivisionError:
+            safety_debt['value'] = 0
+        investments['type'] = 'unclassified savings'
+        investments['value'] = sum(savings['value']) - sum(retirement['value']) - sum(vacation['value']) - safety_debt['value']
+        data = investments.append(retirement).append(vacation).append(safety_debt)
+        fig = px.pie(data,values='value',names='type',title='Current savings - 1 year period')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
 
