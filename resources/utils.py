@@ -512,7 +512,7 @@ class Vizualizer(BudgetDatabase):
         retirement['type'] = 'retirement'
         vacation = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'vacation'")
         vacation['type'] = 'vacation'
-        safety_debt = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
+        safety_debt = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category not in ('savings','retirement','vacation')")
         safety_debt['type'] = 'safety_debt' 
         try:
             safety_debt['value'] = sum(safety_debt['value']) / 2
