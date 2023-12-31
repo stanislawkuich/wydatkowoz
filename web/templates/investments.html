@@ -1,5 +1,9 @@
 {% extends "index.html" %}
 {% block base %}
+<div id="form_box">
+    <p>Safety Debt Estimation:</p>
+    <div id="numeric-status">{{ context3[0] }}</div> / 2 = <div id="numeric-status">{{ context3[1] }}</div> PLN
+</div>
 <div id="sideplots">
     <div id="plotly-PrintSavingsTrends"></div>
     <div id="plotly-PrintPreviousYearSavings"></div>
@@ -8,38 +12,17 @@
     <p>Add New Investment</p>
     <form class="form_navi" method="POST" action="{{ url_for('NewInvestment')}}">
         <label>Date</label>
-        <input type="date" name="outcome_date" required="required">
-        <label>Expenses</label>
-        <input type="text" name="outcome" required="required">
+        <input type="date" name="investment_date" required="required">
+        <label>Current Value</label>
+        <input type="text" name="investment" required="required">
+        <label>Goal</label>
+        <input type="text" name="goal" required="required">
         <label>Description</label>
         <input type="text" name="description">
-        <label>Category</label>
-        <select name="category">
-            <option value=0>0 - rent</option>
-            <option value=1>1 - savings</option>
-            <option value=2>2 - telecommunication</option>
-            <option value=3>3 - liabilities</option>
-            <option value=4>4 - house_maintenance</option>
-            <option value=5>5 - car_maintenance</option>
-            <option value=6>6 - education</option>
-            <option value=7>7 - entertainment</option>
-            <option value=8 selected>8 - other</option>
-            <option value=9>9 - insurance</option>
-            <option value=10>10 - health_care</option>
-            <option value=11>11 - food</option>
-            <option value=12>12 - retirement</option>
-            <option value=13>13 - vacation</option>
-        </select>
-        <label>Type</label>
-        <select name="type">
-            <option value=0>0 - needs</option>
-            <option value=1 selected>1 - wants</option>
-            <option value=2>2 - savings/investments</option>
-        </select>
         <label>Was payed?</label>
-        <input type="radio" name="waspayed" value="True" checked="checked">
+        <input type="radio" name="waspayed" value="True">
         yes
-        <input type="radio" name="waspayed" value="False">
+        <input type="radio" name="waspayed" value="False" checked="checked">
         no
         <input type="submit" value="Submit">
     </form>
@@ -47,24 +30,22 @@
 <table>
     <tr>
         <th>Date</th>
-        <th>Cost</th>
-        <th>Description</th>
-        <th>Category</th>
+        <th>Value</th>
+        <th>Goal</th>
+        <th>Name</th>
         <th>wasPayed?</th>
-        <th>Type</th>
         <th>Actions</th>
     </tr>
     {% for item in items %}
     <tr>
     <td> {{ item[2] }}</td>
-    <td class="money"> {{ item[3] }}</td>
+    <td> {{ item[3] }}</td>
     <td> {{ item[4] }}</td>
     <td> {{ item[5] }}</td>
     <td> {{ item[6] }}</td>
-    <td> {{ item[7] }}</td>
     <td>
-        <a href="{{ url_for('DeleteExpenses', id=item[0]) }}">Delete</a>
-        <a href="{{ url_for('EditExpenses', id=item[0]) }}">Edit</a>
+        <a href="{{ url_for('DeleteInvestment', id=item[0]) }}">Delete</a>
+        <a href="{{ url_for('EditInvestment', id=item[0]) }}">Edit</a>
     </td>
     </tr>
     {% endfor %}

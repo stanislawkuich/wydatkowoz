@@ -150,6 +150,20 @@ class BudgetDatabase:
             );
             """
         )
+        self.cur = self.conn.cursor()
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS [Investments] (
+                [InvestmentId] INTEGER NOT NULL PRIMARY KEY, 
+                [TIMESTAMP] INTEGER(10) NOT NULL,
+                [DATE] TEXT NOT NULL,
+                [VALUE] REAL(50) NOT NULL,
+                [GOAL] REAL(50) NOT NULL,
+                [NAME] TEXT NOT NULL,
+                [WAS_PAYED] INTEGER NOT NULL
+            );
+            """
+        )
         return
 
     def GetAllIncomes(self,desc_order=True):
@@ -318,7 +332,7 @@ class BudgetDatabase:
             self.outputTime = datetime.datetime.fromtimestamp(self.date)
         return self.outputTime
     
-    def GetAllInvestments(self,desc_order=True):
+    def GetAllSavings(self,desc_order=True):
         self.conn = sqlite3.connect(self.path)
         self.cur = self.conn.cursor()
         if desc_order:
@@ -327,7 +341,23 @@ class BudgetDatabase:
             self.allInvestments = self.cur.execute('SELECT * FROM Expenses WHERE type == "savings/investments" ORDER BY TIMESTAMP ASC;').fetchall()
         return self.allInvestments
     
-    def GetInvestmentByDate(self,delta):
+    def GetAllInvestments(self,desc_order=True):
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        if desc_order:
+            self.allInvestments = self.cur.execute('SELECT * FROM Investments ORDER BY TIMESTAMP DESC;').fetchall()
+        else:
+            self.allInvestments = self.cur.execute('SELECT * FROM Investments ORDER BY TIMESTAMP ASC;').fetchall()
+        return self.allInvestments
+    
+    def GetInvestment(self,id):
+        self.id = id
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.income = self.cur.execute('SELECT * FROM Investments WHERE InvestmentId='+str(self.id)+';')
+        return self.income
+    
+    def GetSavingByDate(self,delta):
         self.delta = delta
         self.lastNdays = int((datetime.datetime.now() - datetime.timedelta(days=self.delta)).timestamp())
         self.delta_timestamp = datetime.timedelta(days=self.delta)
@@ -335,6 +365,44 @@ class BudgetDatabase:
         self.cur = self.conn.cursor()
         self.FoundedIncomes = self.cur.execute('SELECT * FROM Expenses WHERE TIMESTAMP > '+str(self.lastNdays)+' AND type == "savings/investments" ORDER BY TIMESTAMP DESC;').fetchall()
         return self.FoundedIncomes
+    
+    def SetNewInvestment(self, timestamp=0, date=0, value=0, goal=0, name='Custom Investment', was_payed=False):
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
+        self.name = name
+        self.value = value
+        self.goal = goal
+        self.was_payed = was_payed
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.investment = self.cur.execute("INSERT INTO Investments (TIMESTAMP,DATE,VALUE,GOAL,NAME,WAS_PAYED) VALUES (%s, '%s', %s, %s, '%s',%s);" % (self.timestamp, self.date, self.value, self.goal, self.name,self.was_payed))
+        self.conn.commit()
+        logger.info('New investment has been added - value: '+str(self.goal)+' name: '+str(self.name))
+        return 'New Investment: '+str(self.name)
+    
+    def UpdateInvestment(self,id, timestamp, date, value, goal, name, was_payed):
+        self.id = id
+        self.timestamp = self.EpochConverter(timestamp)
+        self.date = date
+        self.name = name
+        self.value = value
+        self.goal = goal
+        self.was_payed = was_payed
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.investment = self.cur.execute("UPDATE Investments SET TIMESTAMP=%s,DATE='%s',VALUE=%s,GOAL=%s,NAME='%s',WAS_PAYED=%s WHERE InvestmentId=%s;" % (self.timestamp, self.date, self.value, self.goal, self.name, self.was_payed, self.id))
+        self.conn.commit()
+        logger.info('Investment has been updated - id:'+str(self.id)+' timestamp:'+str(self.timestamp)+' date:'+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' goal: '+str(self.goal))
+        return 'Investment has been updated - id: '+str(self.id)+' timestamp: '+str(self.timestamp)+' date: '+str(self.date)+' value: '+str(self.value)+' name: '+str(self.name)+' goal: '+str(self.goal)
+    
+    def DelInvestment(self, id):
+        self.id = id
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        self.investment = self.cur.execute('DELETE FROM Investments WHERE InvestmentId=%s;' % (self.id))
+        self.conn.commit()
+        logger.info('Investment has been deleted - id: '+str(self.id))
+        return 'Investment has been deleted - id: '+str(self.id)
 
 class Vizualizer(BudgetDatabase):
     """
@@ -488,7 +556,7 @@ class Vizualizer(BudgetDatabase):
         return plot_json
     
     def PrintSavingsTrends(self):
-        investments = pd.DataFrame(self.GetAllInvestments(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        investments = pd.DataFrame(self.GetAllSavings(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         savings = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
         retirement = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'retirement'")
         vacation = pd.DataFrame(self.GetAllExpenses(desc_order=False),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'vacation'")
@@ -505,7 +573,7 @@ class Vizualizer(BudgetDatabase):
             return plot_json
         
     def PrintPreviousYearSavings(self):
-        investments = pd.DataFrame(self.GetInvestmentByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type'])
+        investments = pd.DataFrame(self.GetSavingByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type'])
         savings = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'savings'")
         savings['type'] = 'savings'
         retirement = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category == 'retirement'")
@@ -524,6 +592,15 @@ class Vizualizer(BudgetDatabase):
         fig = px.pie(data,values='value',names='type',title='Current savings - 1 year period')
         plot_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return plot_json
+    
+    def PrintSafetyDebtCalculation(self):
+        safety_debt = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category not in ('savings','retirement','vacation')")
+        expenses_wo_savings = pd.DataFrame(self.GetExpensesByDate(365),columns=['index','timestamp','date','value','name','category','was_payed','type']).query("category not in ('savings','retirement','vacation')")
+        try:
+            safety_debt['value'] = sum(safety_debt['value']) / 2
+        except ZeroDivisionError:
+            safety_debt['value'] = 0
+        return expenses_wo_savings['value'].sum(),safety_debt['value'].sum()
 
 class Validator:
     """
