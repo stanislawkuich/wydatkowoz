@@ -20,7 +20,7 @@ def Allincomes():
     if flask.request.content_type == 'application/json':
         return flask.jsonify(db.GetAllIncomes())
     else:
-        return flask.render_template('incomes.html', items=db.GetAllIncomes())
+        return flask.render_template('incomes.html', title="Incomes", items=db.GetAllIncomes())
 
 @app.route('/api/v1/incomes/recently=<int:days>',methods=['GET'])
 def LastNdaysIncomes(days):
@@ -44,15 +44,85 @@ def Allexpenses():
     if flask.request.content_type == 'application/json':
         return flask.jsonify(db.GetAllExpenses())
     else:
-        return flask.render_template('outcomes.html', items=db.GetAllExpenses())
+        return flask.render_template('outcomes.html', title="Expenses", items=db.GetAllExpenses())
     
 @app.route('/api/v1/investments',methods=['GET'])
 def Allinvestments():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    plot = utils.Vizualizer(systemVariables.budgetDatabasesPath)
+    return flask.render_template('investments.html', title="Savings/Investments",items=db.GetAllInvestments(),context1=plot.PrintSavingsTrends(),context2=plot.PrintPreviousYearSavings(),context3=plot.PrintSafetyDebtCalculation())
+
+@app.route('/api/v1/investment',methods=['POST'])
+def NewInvestment():
     if flask.request.content_type == 'application/json':
-        return flask.jsonify(db.GetAllSInvestments())
+        json_data = flask.request.json
+        date = json_data['date']
+        investment = json_data['value']
+        goal = json_data['goal']
+        description = json_data['name']
+        waspayed = json_data['waspayed']
     else:
-        return flask.render_template('investments.html', items=db.GetAllInvestments())
+        date = flask.request.form['investment_date']
+        investment = flask.request.form['investment']
+        goal = flask.request.form['goal']
+        description = flask.request.form['description']
+        waspayed = flask.request.form['waspayed']
+    if description:
+        data = {'date':date, 'value':investment, 'goal':goal, 'name':description, 'was_payed':waspayed}
+    else:
+        data = {'date':date, 'value':investment, 'goal':goal, 'name':'Custom Investment', 'was_payed':waspayed}
+    if 'date' not in data or 'value' not in data or 'was_payed' not in data:
+        return 'Missing mandatory arguments...', 400
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if 'name' not in data or 'goal' not in data:
+        response = db.SetNewInvestment(timestamp=data['date'],date=data['date'],value=data['value'],was_payed=data['was_payed'])
+    else:
+        response = db.SetNewInvestment(timestamp=data['date'],date=data['date'],value=data['value'],goal=data['goal'],name=data['name'],was_payed=data['was_payed'])
+    if flask.request.content_type == 'application/json':
+        return flask.jsonify(response)
+    else:
+        return flask.render_template('status.html', value=response)
+    
+@app.route('/api/v1/investment/delete/<int:id>',methods=['DELETE','GET'])
+def DeleteInvestment(id):
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        if flask.request.method == 'DELETE':
+            response = db.DelInvestment(id)
+            return flask.jsonify(response)
+        else:
+            return 'Wrong method...', 500
+    else:
+        response = db.DelInvestment(id)
+        return flask.render_template('status.html', value=response)
+
+@app.route('/api/v1/investment/edit/<int:id>',methods=['GET'])
+def EditInvestment(id):
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    return flask.render_template('edit_investment.html',items=db.GetInvestment(id))
+
+@app.route('/api/v1/investment/update',methods=['POST'])
+def UpdateInvestment():
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        json_data = flask.request.json
+        id = json_data['id']
+        date = json_data['date']
+        investment = json_data['value']
+        goal = json_data['goal']
+        description = json_data['name']
+        waspayed = json_data['waspayed']
+        response = db.UpdateInvestment(id,date,date,investment,goal,description,waspayed)
+        return flask.jsonify(response)
+    else:
+        id = flask.request.form['id']
+        date = flask.request.form['investment_date']
+        investment = flask.request.form['investment']
+        goal = flask.request.form['goal']
+        description = flask.request.form['description']
+        waspayed = flask.request.form['waspayed']
+        response = db.UpdateInvestment(id,date,date,investment,goal,description,waspayed)
+        return flask.render_template('status.html', value=response)
 
 @app.route('/api/v1/expenses/recently=<int:days>',methods=['GET'])
 def LastNDaysExpenses(days):
