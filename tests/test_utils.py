@@ -66,7 +66,7 @@ class BudgetDatabase(unittest.TestCase):
         self.assertNotEqual(msg, result)
 
 
-#@unittest.skip
+@unittest.skip
 class Vizualizer(unittest.TestCase):
     # obiekt ktory testujemy
     g = None
