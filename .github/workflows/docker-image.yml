@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: 
-      image: python:latest
+      image: python:3.11
     steps:
     - name: Checkout
       uses: actions/checkout@v2
