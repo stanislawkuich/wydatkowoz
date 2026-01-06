@@ -61,6 +61,7 @@
     <td>
         <a href="{{ url_for('DeleteExpenses', id=item[0]) }}">Delete</a>
         <a href="{{ url_for('EditExpenses', id=item[0]) }}">Edit</a>
+        <a href="{{ url_for('CopyExpenses', id=item[0]) }}">Copy</a>
     </td>
     </tr>
     {% endfor %}

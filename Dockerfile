@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:3.11
 WORKDIR /app
 RUN useradd -u 1999 -d /app bot && chown -R bot /app
 ENV FLASK_APP=resources/restApi.py

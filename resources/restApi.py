@@ -255,6 +255,19 @@ def EditExpenses(id):
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
     return flask.render_template('edit_expenses.html',items=db.GetExpenses(id))
 
+@app.route('/api/v1/expenses/copy/<int:id>',methods=['PATCH','GET'])
+def CopyExpenses(id):
+    db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
+    if flask.request.content_type == 'application/json':
+        if flask.request.method == 'PATCH':
+            response = db.CopyExpenses(id)
+            return flask.jsonify(response)
+        else:
+            return 'Wrong method...', 500
+    else:
+        response = db.CopyExpenses(id)
+        return flask.render_template('status.html', value=response)
+
 @app.route('/api/v1/expenses/update',methods=['POST'])
 def UpdateExpenses():
     db = utils.BudgetDatabase(systemVariables.budgetDatabasesPath)
