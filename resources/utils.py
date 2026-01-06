@@ -294,6 +294,18 @@ class BudgetDatabase:
         self.conn.commit()
         logger.info('Expense has been deleted - id: '+str(self.id))
         return 'Expense has been deleted - id: '+str(self.id)
+    
+    def CopyExpenses(self, id):
+        self.id = id
+        self.modifiedTime = datetime.datetime.now().strftime('%Y-%m-%d')
+        self.modifiedTimestamp = datetime.datetime.strptime(self.modifiedTime, '%Y-%m-%d').timestamp()
+        self.conn = sqlite3.connect(self.path)
+        self.cur = self.conn.cursor()
+        # TODO: Fix the SQL statement to copy row
+        self.expense = self.cur.execute("INSERT INTO Expenses (TIMESTAMP,DATE,VALUE,NAME,CATEGORY,WAS_PAYED,TYPE) SELECT %s,'%s',VALUE,NAME,CATEGORY,WAS_PAYED,TYPE FROM Expenses WHERE ExpenseId=%s;" % (self.modifiedTimestamp,self.modifiedTime,self.id))
+        self.conn.commit()
+        logger.info('Expense has been copied - id:'+str(self.id))
+        return 'Expense has been copied - id:'+str(self.id)
 
     def UpdateIncome(self,id, timestamp, date, value, name):
         self.id = id
